@@ -1,17 +1,32 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApartmentService } from './services/apartment.service';
 import { Apartment, Room, Expense, ExpenseCadence, ApartmentMetrics } from './models/apartment.model';
 
 @Component({
-  selector: 'app-root',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
-  template: `
+    selector: 'app-root',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormsModule],
+    template: `
     <div class="app-container">
       <header class="header">
         <h1>Apartment Manager</h1>
         <p class="subtitle">Track your properties, rooms, and finances in real-time</p>
+        <div class="header-actions">
+          <button class="btn-secondary" (click)="exportData()">
+            <span class="icon">📥</span> Export JSON
+          </button>
+          <button class="btn-secondary" (click)="triggerImport()">
+            <span class="icon">📤</span> Import JSON
+          </button>
+          <input
+            type="file"
+            #fileInput
+            accept=".json"
+            (change)="importData($event)"
+            style="display: none;"
+          />
+        </div>
       </header>
 
       <section class="add-apartment-section">
@@ -68,6 +83,9 @@ import { Apartment, Room, Expense, ExpenseCadence, ApartmentMetrics } from './mo
                   <div class="metric-card revenue">
                     <span class="metric-label">Yearly Revenue</span>
                     <span class="metric-value">{{ formatCurrency(metrics.yearlyRevenue) }}</span>
+                    @if (metrics.minYearlyRevenue !== metrics.maxYearlyRevenue) {
+                      <span class="metric-range">{{ formatCurrency(metrics.minYearlyRevenue) }} - {{ formatCurrency(metrics.maxYearlyRevenue) }}</span>
+                    }
                   </div>
                   <div class="metric-card costs">
                     <span class="metric-label">Monthly Costs</span>
@@ -80,10 +98,16 @@ import { Apartment, Room, Expense, ExpenseCadence, ApartmentMetrics } from './mo
                   <div class="metric-card profit" [class.negative]="metrics.monthlyProfit < 0">
                     <span class="metric-label">Monthly Profit</span>
                     <span class="metric-value">{{ formatCurrency(metrics.monthlyProfit) }}</span>
+                    @if (metrics.minMonthlyProfit !== metrics.maxMonthlyProfit) {
+                      <span class="metric-range">{{ formatCurrency(metrics.minMonthlyProfit) }} - {{ formatCurrency(metrics.maxMonthlyProfit) }}</span>
+                    }
                   </div>
                   <div class="metric-card profit" [class.negative]="metrics.yearlyProfit < 0">
                     <span class="metric-label">Yearly Profit</span>
                     <span class="metric-value">{{ formatCurrency(metrics.yearlyProfit) }}</span>
+                    @if (metrics.minYearlyProfit !== metrics.maxYearlyProfit) {
+                      <span class="metric-range">{{ formatCurrency(metrics.minYearlyProfit) }} - {{ formatCurrency(metrics.maxYearlyProfit) }}</span>
+                    }
                   </div>
                 </div>
               </section>
@@ -228,7 +252,7 @@ import { Apartment, Room, Expense, ExpenseCadence, ApartmentMetrics } from './mo
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     :host {
       display: block;
       min-height: 100vh;
@@ -261,7 +285,36 @@ import { Apartment, Room, Expense, ExpenseCadence, ApartmentMetrics } from './mo
     .subtitle {
       color: #8892b0;
       font-size: 1.1rem;
-      margin: 0;
+      margin: 0 0 1.5rem 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+
+    .btn-secondary {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      border-radius: 10px;
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+      font-size: 0.9rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(102, 126, 234, 0.2);
+      border-color: #667eea;
+      transform: translateY(-1px);
     }
 
     .add-apartment-section {
@@ -820,6 +873,16 @@ import { Apartment, Room, Expense, ExpenseCadence, ApartmentMetrics } from './mo
         font-size: 2rem;
       }
 
+      .header-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .btn-secondary {
+        width: 100%;
+        justify-content: center;
+      }
+
       .input-group {
         flex-direction: column;
       }
@@ -835,143 +898,187 @@ import { Apartment, Room, Expense, ExpenseCadence, ApartmentMetrics } from './mo
   `],
 })
 export class AppComponent {
-  private apartmentService = inject(ApartmentService);
+    private apartmentService = inject(ApartmentService);
 
-  apartments = this.apartmentService.apartments;
+    @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
-  newApartmentName = signal('');
-  
-  addingRoomFor = signal<string | null>(null);
-  newRoomName = signal('');
-  newRoomRentMin = signal(0);
-  newRoomRentMax = signal(0);
+    apartments = this.apartmentService.apartments;
 
-  addingExpenseFor = signal<string | null>(null);
-  newExpenseName = signal('');
-  newExpenseAmount = signal(0);
-  newExpenseCadence = signal<ExpenseCadence>('monthly');
+    newApartmentName = signal('');
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('en-AE', {
-      style: 'currency',
-      currency: 'AED',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  }
+    addingRoomFor = signal<string | null>(null);
+    newRoomName = signal('');
+    newRoomRentMin = signal(0);
+    newRoomRentMax = signal(0);
 
-  getMetrics(apartment: Apartment): ApartmentMetrics {
-    return this.apartmentService.calculateMetrics(apartment);
-  }
+    addingExpenseFor = signal<string | null>(null);
+    newExpenseName = signal('');
+    newExpenseAmount = signal(0);
+    newExpenseCadence = signal<ExpenseCadence>('monthly');
 
-  addApartment(): void {
-    const name = this.newApartmentName().trim();
-    if (name) {
-      this.apartmentService.addApartment(name);
-      this.newApartmentName.set('');
+    formatCurrency(value: number): string {
+        return new Intl.NumberFormat('en-AE', {
+            style: 'currency',
+            currency: 'AED',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(value);
     }
-  }
 
-  removeApartment(id: string): void {
-    this.apartmentService.removeApartment(id);
-  }
-
-  updateApartmentName(id: string, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.apartmentService.updateApartmentName(id, input.value);
-  }
-
-  blurTarget(event: Event): void {
-    (event.target as HTMLElement).blur();
-  }
-
-  openRoomForm(apartmentId: string): void {
-    this.addingRoomFor.set(apartmentId);
-    this.newRoomName.set('');
-    this.newRoomRentMin.set(0);
-    this.newRoomRentMax.set(0);
-  }
-
-  closeRoomForm(): void {
-    this.addingRoomFor.set(null);
-  }
-
-  addRoom(apartmentId: string): void {
-    const name = this.newRoomName().trim();
-    if (name) {
-      this.apartmentService.addRoom(apartmentId, {
-        name,
-        rentMin: this.newRoomRentMin(),
-        rentMax: this.newRoomRentMax(),
-        isTaken: false,
-      });
-      this.closeRoomForm();
+    getMetrics(apartment: Apartment): ApartmentMetrics {
+        return this.apartmentService.calculateMetrics(apartment);
     }
-  }
 
-  updateRoomName(apartmentId: string, roomId: string, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.apartmentService.updateRoom(apartmentId, roomId, { name: input.value });
-  }
-
-  updateRoomRentMin(apartmentId: string, roomId: string, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.apartmentService.updateRoom(apartmentId, roomId, { rentMin: +input.value });
-  }
-
-  updateRoomRentMax(apartmentId: string, roomId: string, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.apartmentService.updateRoom(apartmentId, roomId, { rentMax: +input.value });
-  }
-
-  toggleRoomTaken(apartmentId: string, roomId: string, currentValue: boolean): void {
-    this.apartmentService.updateRoom(apartmentId, roomId, { isTaken: !currentValue });
-  }
-
-  removeRoom(apartmentId: string, roomId: string): void {
-    this.apartmentService.removeRoom(apartmentId, roomId);
-  }
-
-  openExpenseForm(apartmentId: string): void {
-    this.addingExpenseFor.set(apartmentId);
-    this.newExpenseName.set('');
-    this.newExpenseAmount.set(0);
-    this.newExpenseCadence.set('monthly');
-  }
-
-  closeExpenseForm(): void {
-    this.addingExpenseFor.set(null);
-  }
-
-  addExpense(apartmentId: string): void {
-    const name = this.newExpenseName().trim();
-    if (name) {
-      this.apartmentService.addExpense(apartmentId, {
-        name,
-        amount: this.newExpenseAmount(),
-        cadence: this.newExpenseCadence(),
-      });
-      this.closeExpenseForm();
+    addApartment(): void {
+        const name = this.newApartmentName().trim();
+        if (name) {
+            this.apartmentService.addApartment(name);
+            this.newApartmentName.set('');
+        }
     }
-  }
 
-  updateExpenseName(apartmentId: string, expenseId: string, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.apartmentService.updateExpense(apartmentId, expenseId, { name: input.value });
-  }
+    removeApartment(id: string): void {
+        this.apartmentService.removeApartment(id);
+    }
 
-  updateExpenseAmount(apartmentId: string, expenseId: string, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.apartmentService.updateExpense(apartmentId, expenseId, { amount: +input.value });
-  }
+    updateApartmentName(id: string, event: Event): void {
+        const input = event.target as HTMLInputElement;
+        this.apartmentService.updateApartmentName(id, input.value);
+    }
 
-  updateExpenseCadence(apartmentId: string, expenseId: string, event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    this.apartmentService.updateExpense(apartmentId, expenseId, { cadence: select.value as ExpenseCadence });
-  }
+    blurTarget(event: Event): void {
+        (event.target as HTMLElement).blur();
+    }
 
-  removeExpense(apartmentId: string, expenseId: string): void {
-    this.apartmentService.removeExpense(apartmentId, expenseId);
-  }
+    openRoomForm(apartmentId: string): void {
+        this.addingRoomFor.set(apartmentId);
+        this.newRoomName.set('');
+        this.newRoomRentMin.set(0);
+        this.newRoomRentMax.set(0);
+    }
+
+    closeRoomForm(): void {
+        this.addingRoomFor.set(null);
+    }
+
+    addRoom(apartmentId: string): void {
+        const name = this.newRoomName().trim();
+        if (name) {
+            this.apartmentService.addRoom(apartmentId, {
+                name,
+                rentMin: this.newRoomRentMin(),
+                rentMax: this.newRoomRentMax(),
+                isTaken: false,
+            });
+            this.closeRoomForm();
+        }
+    }
+
+    updateRoomName(apartmentId: string, roomId: string, event: Event): void {
+        const input = event.target as HTMLInputElement;
+        this.apartmentService.updateRoom(apartmentId, roomId, { name: input.value });
+    }
+
+    updateRoomRentMin(apartmentId: string, roomId: string, event: Event): void {
+        const input = event.target as HTMLInputElement;
+        this.apartmentService.updateRoom(apartmentId, roomId, { rentMin: +input.value });
+    }
+
+    updateRoomRentMax(apartmentId: string, roomId: string, event: Event): void {
+        const input = event.target as HTMLInputElement;
+        this.apartmentService.updateRoom(apartmentId, roomId, { rentMax: +input.value });
+    }
+
+    toggleRoomTaken(apartmentId: string, roomId: string, currentValue: boolean): void {
+        this.apartmentService.updateRoom(apartmentId, roomId, { isTaken: !currentValue });
+    }
+
+    removeRoom(apartmentId: string, roomId: string): void {
+        this.apartmentService.removeRoom(apartmentId, roomId);
+    }
+
+    openExpenseForm(apartmentId: string): void {
+        this.addingExpenseFor.set(apartmentId);
+        this.newExpenseName.set('');
+        this.newExpenseAmount.set(0);
+        this.newExpenseCadence.set('monthly');
+    }
+
+    closeExpenseForm(): void {
+        this.addingExpenseFor.set(null);
+    }
+
+    addExpense(apartmentId: string): void {
+        const name = this.newExpenseName().trim();
+        if (name) {
+            this.apartmentService.addExpense(apartmentId, {
+                name,
+                amount: this.newExpenseAmount(),
+                cadence: this.newExpenseCadence(),
+            });
+            this.closeExpenseForm();
+        }
+    }
+
+    updateExpenseName(apartmentId: string, expenseId: string, event: Event): void {
+        const input = event.target as HTMLInputElement;
+        this.apartmentService.updateExpense(apartmentId, expenseId, { name: input.value });
+    }
+
+    updateExpenseAmount(apartmentId: string, expenseId: string, event: Event): void {
+        const input = event.target as HTMLInputElement;
+        this.apartmentService.updateExpense(apartmentId, expenseId, { amount: +input.value });
+    }
+
+    updateExpenseCadence(apartmentId: string, expenseId: string, event: Event): void {
+        const select = event.target as HTMLSelectElement;
+        this.apartmentService.updateExpense(apartmentId, expenseId, { cadence: select.value as ExpenseCadence });
+    }
+
+    removeExpense(apartmentId: string, expenseId: string): void {
+        this.apartmentService.removeExpense(apartmentId, expenseId);
+    }
+
+    exportData(): void {
+        const data = this.apartmentService.exportData();
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `apartment-manager-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    triggerImport(): void {
+        this.fileInput.nativeElement.click();
+    }
+
+    importData(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const content = e.target?.result as string;
+                const data = JSON.parse(content) as Apartment[];
+                if (Array.isArray(data)) {
+                    if (confirm('This will replace all current data. Are you sure?')) {
+                        this.apartmentService.importData(data);
+                        input.value = '';
+                    }
+                } else {
+                    alert('Invalid JSON format. Expected an array of apartments.');
+                }
+            } catch (error) {
+                alert('Error parsing JSON file. Please check the file format.');
+            }
+        };
+        reader.readAsText(file);
+    }
 }
 

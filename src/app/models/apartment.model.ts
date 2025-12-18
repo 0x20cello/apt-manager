@@ -1,35 +1,41 @@
 export interface Room {
-  id: string;
-  name: string;
-  rentMin: number;
-  rentMax: number;
-  isTaken: boolean;
+    id: string;
+    name: string;
+    rentMin: number;
+    rentMax: number;
+    isTaken: boolean;
 }
 
 export type ExpenseCadence = 'monthly' | 'yearly';
 
 export interface Expense {
-  id: string;
-  name: string;
-  amount: number;
-  cadence: ExpenseCadence;
+    id: string;
+    name: string;
+    amount: number;
+    cadence: ExpenseCadence;
 }
 
 export interface Apartment {
-  id: string;
-  name: string;
-  rooms: Room[];
-  expenses: Expense[];
+    id: string;
+    name: string;
+    rooms: Room[];
+    expenses: Expense[];
 }
 
 export interface ApartmentMetrics {
-  monthlyRevenue: number;
-  yearlyRevenue: number;
-  monthlyCosts: number;
-  yearlyCosts: number;
-  monthlyProfit: number;
-  yearlyProfit: number;
-  minMonthlyRevenue: number;
-  maxMonthlyRevenue: number;
+    monthlyRevenue: number;
+    yearlyRevenue: number;
+    monthlyCosts: number;
+    yearlyCosts: number;
+    monthlyProfit: number;
+    yearlyProfit: number;
+    minMonthlyRevenue: number;
+    maxMonthlyRevenue: number;
+    minYearlyRevenue: number;
+    maxYearlyRevenue: number;
+    minMonthlyProfit: number;
+    maxMonthlyProfit: number;
+    minYearlyProfit: number;
+    maxYearlyProfit: number;
 }
 
