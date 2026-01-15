@@ -269,7 +269,7 @@ interface TenantBill {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
       background: var(--color-bg-secondary);
       border: 1px solid var(--color-border);
       border-radius: var(--border-radius-md);
@@ -277,12 +277,12 @@ interface TenantBill {
 
     .tenant-info {
       display: flex;
-      flex-direction: column;
-      gap: var(--spacing-xs);
+      align-items: center;
+      gap: var(--spacing-md);
     }
 
     .tenant-name {
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--color-text-primary);
     }
@@ -293,7 +293,7 @@ interface TenantBill {
     }
 
     .tenant-amount {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
       color: var(--color-primary);
     }

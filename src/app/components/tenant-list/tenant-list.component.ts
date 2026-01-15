@@ -29,6 +29,13 @@ import { TenantCalendarModalComponent } from '../tenant-calendar-modal/tenant-ca
           <input type="date" [(ngModel)]="newTenantStartDate" placeholder="Start date (optional)" />
           <input type="date" [(ngModel)]="newTenantEndDate" placeholder="End date (optional)" />
         </div>
+        <input
+          type="number"
+          [(ngModel)]="newTenantRentCollectionDay"
+          placeholder="Rent collection day (1-31, optional)"
+          min="1"
+          max="31"
+        />
         <textarea
           [(ngModel)]="newTenantNotes"
           placeholder="Notes (optional)"
@@ -182,6 +189,16 @@ import { TenantCalendarModalComponent } from '../tenant-calendar-modal/tenant-ca
                   <label>End Date</label>
                   <input type="date" [(ngModel)]="editTenantEndDate" />
                 </div>
+              </div>
+              <div class="form-group">
+                <label>Rent Collection Day</label>
+                <input
+                  type="number"
+                  [(ngModel)]="editTenantRentCollectionDay"
+                  placeholder="Day of month (1-31)"
+                  min="1"
+                  max="31"
+                />
               </div>
               <div class="form-group">
                 <label>Notes</label>
@@ -587,6 +604,7 @@ export class TenantListComponent {
   newTenantRoomId = signal('');
   newTenantStartDate = signal('');
   newTenantEndDate = signal('');
+  newTenantRentCollectionDay = signal<number | undefined>(undefined);
   newTenantNotes = signal('');
   selectedTenantForCalendar = signal<Tenant | null>(null);
   selectedTenantForEdit = signal<Tenant | null>(null);
@@ -596,6 +614,7 @@ export class TenantListComponent {
   editTenantRoomId = signal('');
   editTenantStartDate = signal('');
   editTenantEndDate = signal('');
+  editTenantRentCollectionDay = signal<number | undefined>(undefined);
   editTenantNotes = signal('');
 
   getRoomName(roomId: string): string {
@@ -606,6 +625,7 @@ export class TenantListComponent {
     const name = this.newTenantName().trim();
     const roomId = this.newTenantRoomId();
     if (name && roomId) {
+      const rentDay = this.newTenantRentCollectionDay();
       this.tenantAdded.emit({
         name,
         email: this.newTenantEmail().trim() || undefined,
@@ -613,6 +633,7 @@ export class TenantListComponent {
         roomId,
         startDate: this.newTenantStartDate() || undefined,
         endDate: this.newTenantEndDate() || undefined,
+        rentCollectionDay: rentDay && rentDay >= 1 && rentDay <= 31 ? rentDay : undefined,
         notes: this.newTenantNotes().trim() || undefined,
       });
       this.newTenantName.set('');
@@ -621,6 +642,7 @@ export class TenantListComponent {
       this.newTenantRoomId.set('');
       this.newTenantStartDate.set('');
       this.newTenantEndDate.set('');
+      this.newTenantRentCollectionDay.set(undefined);
       this.newTenantNotes.set('');
       this.showAddForm.set(false);
     }
@@ -674,6 +696,7 @@ export class TenantListComponent {
     this.editTenantRoomId.set(tenant.roomId);
     this.editTenantStartDate.set(tenant.startDate || '');
     this.editTenantEndDate.set(tenant.endDate || '');
+    this.editTenantRentCollectionDay.set(tenant.rentCollectionDay);
     this.editTenantNotes.set(tenant.notes || '');
   }
 
@@ -685,6 +708,7 @@ export class TenantListComponent {
     this.editTenantRoomId.set('');
     this.editTenantStartDate.set('');
     this.editTenantEndDate.set('');
+    this.editTenantRentCollectionDay.set(undefined);
     this.editTenantNotes.set('');
   }
 
@@ -695,6 +719,7 @@ export class TenantListComponent {
     const name = this.editTenantName().trim();
     const roomId = this.editTenantRoomId();
     if (name && roomId) {
+      const rentDay = this.editTenantRentCollectionDay();
       this.tenantUpdated.emit({
         id: tenant.id,
         updates: {
@@ -704,6 +729,7 @@ export class TenantListComponent {
           roomId,
           startDate: this.editTenantStartDate() || undefined,
           endDate: this.editTenantEndDate() || undefined,
+          rentCollectionDay: rentDay && rentDay >= 1 && rentDay <= 31 ? rentDay : undefined,
           notes: this.editTenantNotes().trim() || undefined,
         },
       });

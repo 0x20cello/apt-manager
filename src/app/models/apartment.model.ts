@@ -25,6 +25,7 @@ export interface Tenant {
     endDate?: string;
     notes?: string;
     disabledDates?: string[];
+    rentCollectionDay?: number;
 }
 
 export interface Apartment {
