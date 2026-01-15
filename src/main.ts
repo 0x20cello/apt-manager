@@ -1,5 +1,7 @@
 import { bootstrapApplication } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { AppComponent } from './app/app.component';
+import { routes } from './app/routes/dashboard.route';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 
@@ -13,5 +15,7 @@ if (Capacitor.isNativePlatform()) {
     });
 }
 
-bootstrapApplication(AppComponent).catch((err) => console.error(err));
+bootstrapApplication(AppComponent, {
+    providers: [provideRouter(routes)],
+}).catch((err) => console.error(err));
 

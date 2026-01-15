@@ -1,25 +1,113 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Apartment, Room, Expense, ApartmentMetrics, ExpenseCadence } from '../models/apartment.model';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
+import { Apartment, Room, Expense, ApartmentMetrics, ExpenseCadence, Tenant } from '../models/apartment.model';
+import { CloudSyncService } from './cloud-sync.service';
 
 const STORAGE_KEY = 'apartment-manager-data';
+const CURRENT_APARTMENT_KEY = 'current-apartment-id';
 
 @Injectable({ providedIn: 'root' })
 export class ApartmentService {
+    private cloudSync = inject(CloudSyncService);
+
     private readonly apartmentsSignal = signal<Apartment[]>(this.loadFromStorage());
+    private readonly currentApartmentIdSignal = signal<string | null>(
+        this.loadCurrentApartmentId()
+    );
 
     readonly apartments = this.apartmentsSignal.asReadonly();
+    readonly currentApartmentId = this.currentApartmentIdSignal.asReadonly();
+
+    readonly currentApartment = computed(() => {
+        const id = this.currentApartmentIdSignal();
+        if (!id) return null;
+        return this.apartmentsSignal().find((a) => a.id === id) || null;
+    });
+
+    private isSyncingToCloud = false;
+
+    constructor() {
+        this.initializeCloudSync();
+        
+        effect(() => {
+            const apartments = this.apartmentsSignal();
+            if (!this.isSyncingToCloud) {
+                this.cloudSync.syncToCloud(apartments);
+            }
+        });
+    }
+
+    private async initializeCloudSync(): Promise<void> {
+        window.addEventListener('cloud-sync-update', ((event: CustomEvent<Apartment[]>) => {
+            const cloudData = event.detail;
+            if (cloudData && cloudData.length >= 0) {
+                this.isSyncingToCloud = true;
+                const currentId = this.currentApartmentIdSignal();
+                this.apartmentsSignal.set(cloudData);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
+                if (currentId) {
+                    this.setCurrentApartment(currentId);
+                }
+                setTimeout(() => {
+                    this.isSyncingToCloud = false;
+                }, 100);
+            }
+        }) as EventListener);
+
+        const cloudData = await this.cloudSync.syncFromCloud();
+        if (cloudData && cloudData.length > 0) {
+            const localData = this.apartmentsSignal();
+            if (localData.length === 0 || this.isCloudDataNewer(cloudData, localData)) {
+                this.isSyncingToCloud = true;
+                this.apartmentsSignal.set(cloudData);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
+                setTimeout(() => {
+                    this.isSyncingToCloud = false;
+                }, 100);
+            }
+        }
+    }
+
+    private isCloudDataNewer(cloudData: Apartment[], localData: Apartment[]): boolean {
+        return cloudData.length > localData.length;
+    }
 
     private loadFromStorage(): Apartment[] {
         const data = localStorage.getItem(STORAGE_KEY);
-        return data ? JSON.parse(data) : [];
+        const apartments = data ? JSON.parse(data) : [];
+        return apartments.map((apt: Apartment) => ({
+            ...apt,
+            tenants: apt.tenants || [],
+        }));
+    }
+
+    private loadCurrentApartmentId(): string | null {
+        return localStorage.getItem(CURRENT_APARTMENT_KEY);
     }
 
     private saveToStorage(): void {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.apartmentsSignal()));
+        const data = JSON.stringify(this.apartmentsSignal());
+        localStorage.setItem(STORAGE_KEY, data);
+    }
+
+    private saveCurrentApartmentId(id: string | null): void {
+        if (id) {
+            localStorage.setItem(CURRENT_APARTMENT_KEY, id);
+        } else {
+            localStorage.removeItem(CURRENT_APARTMENT_KEY);
+        }
     }
 
     private generateId(): string {
         return crypto.randomUUID();
+    }
+
+    getCurrentApartment(): Apartment | null {
+        return this.currentApartment();
+    }
+
+    setCurrentApartment(id: string | null): void {
+        this.currentApartmentIdSignal.set(id);
+        this.saveCurrentApartmentId(id);
     }
 
     addApartment(name: string): void {
@@ -28,14 +116,24 @@ export class ApartmentService {
             name,
             rooms: [],
             expenses: [],
+            tenants: [],
         };
         this.apartmentsSignal.update((apts) => [...apts, apartment]);
         this.saveToStorage();
+        
+        if (!this.currentApartmentIdSignal()) {
+            this.setCurrentApartment(apartment.id);
+        }
     }
 
     removeApartment(id: string): void {
         this.apartmentsSignal.update((apts) => apts.filter((a) => a.id !== id));
         this.saveToStorage();
+        
+        if (this.currentApartmentIdSignal() === id) {
+            const remaining = this.apartmentsSignal();
+            this.setCurrentApartment(remaining.length > 0 ? remaining[0].id : null);
+        }
     }
 
     updateApartmentName(id: string, name: string): void {
@@ -172,6 +270,45 @@ export class ApartmentService {
 
     importData(data: Apartment[]): void {
         this.apartmentsSignal.set(data);
+        this.saveToStorage();
+    }
+
+    addTenant(apartmentId: string, tenant: Omit<Tenant, 'id'>): void {
+        const newTenant: Tenant = { ...tenant, id: this.generateId() };
+        this.apartmentsSignal.update((apts) =>
+            apts.map((a) =>
+                a.id === apartmentId
+                    ? { ...a, tenants: [...a.tenants, newTenant] }
+                    : a
+            )
+        );
+        this.saveToStorage();
+    }
+
+    updateTenant(apartmentId: string, tenantId: string, updates: Partial<Omit<Tenant, 'id'>>): void {
+        this.apartmentsSignal.update((apts) =>
+            apts.map((a) =>
+                a.id === apartmentId
+                    ? {
+                        ...a,
+                        tenants: a.tenants.map((t) =>
+                            t.id === tenantId ? { ...t, ...updates } : t
+                        ),
+                    }
+                    : a
+            )
+        );
+        this.saveToStorage();
+    }
+
+    removeTenant(apartmentId: string, tenantId: string): void {
+        this.apartmentsSignal.update((apts) =>
+            apts.map((a) =>
+                a.id === apartmentId
+                    ? { ...a, tenants: a.tenants.filter((t) => t.id !== tenantId) }
+                    : a
+            )
+        );
         this.saveToStorage();
     }
 }

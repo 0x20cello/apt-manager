@@ -15,11 +15,23 @@ export interface Expense {
     cadence: ExpenseCadence;
 }
 
+export interface Tenant {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    roomId: string;
+    startDate?: string;
+    endDate?: string;
+    notes?: string;
+}
+
 export interface Apartment {
     id: string;
     name: string;
     rooms: Room[];
     expenses: Expense[];
+    tenants: Tenant[];
 }
 
 export interface ApartmentMetrics {
