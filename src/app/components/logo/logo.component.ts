@@ -39,7 +39,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
     }
 
     .logo-d {
-      color: var(--color-primary-dark);
+      color: #ec4899;
     }
 
     .logo-subtitle {
