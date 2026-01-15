@@ -38,6 +38,12 @@ import { CloudSyncSettingsComponent } from '../cloud-sync-settings/cloud-sync-se
               Tenants
             </a>
           </li>
+          <li class="nav-item">
+            <a routerLink="/bill-calculator" routerLinkActive="active" class="nav-link">
+              <span class="nav-icon">💰</span>
+              Bill Calculator
+            </a>
+          </li>
         </ul>
       </nav>
 

@@ -3,6 +3,7 @@ import { DashboardComponent } from '../components/dashboard/dashboard.component'
 import { ExpensesComponent } from '../components/expenses/expenses.component';
 import { RoomsComponent } from '../components/rooms/rooms.component';
 import { TenantsComponent } from '../components/tenants/tenants.component';
+import { BillCalculatorComponent } from '../components/bill-calculator/bill-calculator.component';
 
 export const routes: Routes = [
   {
@@ -25,6 +26,10 @@ export const routes: Routes = [
   {
     path: 'tenants',
     component: TenantsComponent,
+  },
+  {
+    path: 'bill-calculator',
+    component: BillCalculatorComponent,
   },
   {
     path: '**',

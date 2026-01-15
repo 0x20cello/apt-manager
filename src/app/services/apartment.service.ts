@@ -311,5 +311,37 @@ export class ApartmentService {
         );
         this.saveToStorage();
     }
+
+    toggleTenantOccupancyDate(apartmentId: string, tenantId: string, date: string, disabled: boolean): void {
+        this.apartmentsSignal.update((apts) =>
+            apts.map((a) =>
+                a.id === apartmentId
+                    ? {
+                        ...a,
+                        tenants: a.tenants.map((t) => {
+                            if (t.id !== tenantId) return t;
+                            
+                            const disabledDates = t.disabledDates || [];
+                            let updatedDisabledDates: string[];
+                            
+                            if (disabled) {
+                                updatedDisabledDates = disabledDates.includes(date)
+                                    ? disabledDates
+                                    : [...disabledDates, date];
+                            } else {
+                                updatedDisabledDates = disabledDates.filter((d) => d !== date);
+                            }
+                            
+                            return {
+                                ...t,
+                                disabledDates: updatedDisabledDates.length > 0 ? updatedDisabledDates : undefined,
+                            };
+                        }),
+                    }
+                    : a
+            )
+        );
+        this.saveToStorage();
+    }
 }
 

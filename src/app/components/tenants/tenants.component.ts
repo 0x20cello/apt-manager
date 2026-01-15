@@ -27,6 +27,7 @@ import { TenantListComponent } from '../tenant-list/tenant-list.component';
             (tenantAdded)="onTenantAdded($event)"
             (tenantUpdated)="onTenantUpdated($event)"
             (tenantRemoved)="onTenantRemoved($event)"
+            (tenantOccupancyToggled)="onOccupancyToggle($event)"
           />
         </div>
       }
@@ -103,5 +104,11 @@ export class TenantsComponent {
     const apartment = this.currentApartment();
     if (!apartment) return;
     this.apartmentService.removeTenant(apartment.id, tenantId);
+  }
+
+  onOccupancyToggle(event: { id: string; date: string; disabled: boolean }): void {
+    const apartment = this.currentApartment();
+    if (!apartment) return;
+    this.apartmentService.toggleTenantOccupancyDate(apartment.id, event.id, event.date, event.disabled);
   }
 }
