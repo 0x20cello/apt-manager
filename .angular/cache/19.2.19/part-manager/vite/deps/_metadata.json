@@ -1,34 +1,55 @@
 {
-  "hash": "34786b43",
-  "configHash": "69fb17c4",
-  "lockfileHash": "e261d8d6",
-  "browserHash": "8465b533",
+  "hash": "a0679ae7",
+  "configHash": "ed5aacfd",
+  "lockfileHash": "1f3a1deb",
+  "browserHash": "f789529c",
   "optimized": {
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "d1a92b12",
+      "fileHash": "fbda2861",
       "needsInterop": false
     },
     "@angular/forms": {
       "src": "../../../../../../node_modules/@angular/forms/fesm2022/forms.mjs",
       "file": "@angular_forms.js",
-      "fileHash": "bf02d3d1",
+      "fileHash": "bb138108",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "621b9800",
+      "fileHash": "8ab63eeb",
+      "needsInterop": false
+    },
+    "@capacitor/app": {
+      "src": "../../../../../../node_modules/@capacitor/app/dist/esm/index.js",
+      "file": "@capacitor_app.js",
+      "fileHash": "6bff96a1",
+      "needsInterop": false
+    },
+    "@capacitor/core": {
+      "src": "../../../../../../node_modules/@capacitor/core/dist/index.js",
+      "file": "@capacitor_core.js",
+      "fileHash": "b0cef769",
       "needsInterop": false
     }
   },
   "chunks": {
-    "chunk-RLFVA2IY": {
-      "file": "chunk-RLFVA2IY.js"
+    "chunk-2WKELBEU": {
+      "file": "chunk-2WKELBEU.js"
     },
-    "chunk-BNV2BS6S": {
-      "file": "chunk-BNV2BS6S.js"
+    "chunk-OGSUUIPG": {
+      "file": "chunk-OGSUUIPG.js"
+    },
+    "web-QDVDJWBR": {
+      "file": "web-QDVDJWBR.js"
+    },
+    "chunk-HXI3TUC5": {
+      "file": "chunk-HXI3TUC5.js"
+    },
+    "chunk-WDMUDEB6": {
+      "file": "chunk-WDMUDEB6.js"
     }
   }
 }
