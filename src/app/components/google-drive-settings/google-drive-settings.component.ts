@@ -26,6 +26,9 @@ import { GoogleDriveService } from '../../services/google-drive.service';
               placeholder="xxx.apps.googleusercontent.com"
             />
           </div>
+          <p class="redirect-uri-help">
+            Add this to <strong>Authorized redirect URIs</strong> in your OAuth client: <code class="redirect-uri-value">{{ redirectUri }}</code>
+          </p>
           @if (lastError()) {
             <p class="error-text">{{ lastError() }}</p>
           }
@@ -148,6 +151,21 @@ import { GoogleDriveService } from '../../services/google-drive.service';
       outline: none;
       border-color: var(--color-primary);
     }
+    .redirect-uri-help {
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+      margin: 0 0 var(--spacing-md) 0;
+      line-height: 1.5;
+    }
+    .redirect-uri-value {
+      display: inline-block;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      background: var(--color-bg-secondary);
+      border-radius: var(--border-radius-sm);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      word-break: break-all;
+    }
     .error-text {
       color: var(--color-error);
       font-size: 0.875rem;
@@ -233,6 +251,10 @@ export class GoogleDriveSettingsComponent implements OnInit {
   lastError = this.gdrive.lastError;
   isSaving = this.gdrive.isSaving;
   close = output<void>();
+
+  get redirectUri(): string {
+    return this.gdrive.getRedirectUri();
+  }
 
   constructor() {
     effect(() => {

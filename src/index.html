@@ -5,6 +5,17 @@
     <meta charset="utf-8">
     <title>Apartment Manager</title>
     <base href="/">
+    <script>
+      (function() {
+        var h = window.location.hash && window.location.hash.slice(1);
+        var q = window.location.search && window.location.search.slice(1);
+        var s = (h && (h.indexOf('access_token=') !== -1 || h.indexOf('error=') !== -1)) ? h : (q && (q.indexOf('access_token=') !== -1 || q.indexOf('error=') !== -1)) ? q : '';
+        if (s) {
+          try { sessionStorage.setItem('gdrive_oauth_callback', s); } catch (e) {}
+          window.history.replaceState(null, '', window.location.pathname || '/');
+        }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -1,5 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 
 const GDRIVE_SCRIPT = 'https://accounts.google.com/gsi/client';
 const OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -7,6 +9,7 @@ const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const FILE_NAME = 'part-manager.json';
 const GDRIVE_FILE_ID_KEY = 'gdrive-file-id';
 const GDRIVE_CLIENT_ID_KEY = 'gdrive-client-id';
+const GDRIVE_OAUTH_CALLBACK_KEY = 'gdrive_oauth_callback';
 const DEFAULT_CLIENT_ID = '838239311300-ji616dlcecp6upb9417t6jf0agqh7mt0.apps.googleusercontent.com';
 
 interface TokenClient {
@@ -34,6 +37,7 @@ declare global {
 
 @Injectable({ providedIn: 'root' })
 export class GoogleDriveService {
+  private platformId = inject(PLATFORM_ID);
   private accessToken: string | null = null;
   private tokenClient: TokenClient | null = null;
   private fileId: string | null = this.loadFileId();
@@ -45,25 +49,75 @@ export class GoogleDriveService {
   readonly isSaving = signal<boolean>(false);
 
   constructor() {
-    this.handleOAuthCallback();
+    if (isPlatformBrowser(this.platformId)) {
+      this.handleOAuthCallback();
+      window.addEventListener('hashchange', () => this.handleOAuthCallback());
+      if (Capacitor.isNativePlatform()) {
+        App.addListener('appUrlOpen', (e: { url: string }) => this.handleOAuthFromUrl(e.url));
+      }
+    }
   }
 
-  private handleOAuthCallback(): void {
-    const hash = window.location.hash?.slice(1);
-    if (!hash) return;
-    const params = new URLSearchParams(hash);
+  private applyOAuthParams(params: URLSearchParams): boolean {
     const token = params.get('access_token');
     const error = params.get('error');
     if (error) {
       this.lastError.set(error);
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-      return;
+      return true;
     }
     if (token) {
       this.accessToken = token;
       this.connectedSignal.set(true);
       this.lastError.set(null);
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      return true;
+    }
+    return false;
+  }
+
+  private handleOAuthFromUrl(url: string): void {
+    try {
+      const parsed = new URL(url);
+      const fromHash = parsed.hash?.slice(1);
+      const fromSearch = parsed.search?.slice(1);
+      const s = fromHash || fromSearch;
+      if (!s) return;
+      const params = new URLSearchParams(s);
+      if (this.applyOAuthParams(params)) {
+        try {
+          sessionStorage.removeItem(GDRIVE_OAUTH_CALLBACK_KEY);
+        } catch {
+          //
+        }
+      }
+    } catch {
+      //
+    }
+  }
+
+  private handleOAuthCallback(): void {
+    let params: URLSearchParams | null = null;
+    try {
+      const stored = sessionStorage.getItem(GDRIVE_OAUTH_CALLBACK_KEY);
+      if (stored) {
+        params = new URLSearchParams(stored);
+        sessionStorage.removeItem(GDRIVE_OAUTH_CALLBACK_KEY);
+      }
+    } catch {
+      //
+    }
+    if (!params) {
+      const hash = window.location.hash?.slice(1);
+      const search = window.location.search?.slice(1);
+      const s = (hash && (hash.includes('access_token=') || hash.includes('error='))) ? hash
+        : (search && (search.includes('access_token=') || search.includes('error='))) ? search
+          : null;
+      if (!s) return;
+      params = new URLSearchParams(s);
+    }
+    if (!params || !this.applyOAuthParams(params)) return;
+    if (typeof window !== 'undefined') {
+      const path = (window.location.pathname || '/') + (window.location.search || '');
+      window.history.replaceState(null, '', path);
     }
   }
 
@@ -86,6 +140,10 @@ export class GoogleDriveService {
     } else {
       localStorage.removeItem(GDRIVE_CLIENT_ID_KEY);
     }
+  }
+
+  getRedirectUri(): string {
+    return typeof window !== 'undefined' ? window.location.origin : '';
   }
 
   private storeFileId(id: string | null): void {
