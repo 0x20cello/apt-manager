@@ -10,7 +10,11 @@ const FILE_NAME = 'part-manager.json';
 const GDRIVE_FILE_ID_KEY = 'gdrive-file-id';
 const GDRIVE_CLIENT_ID_KEY = 'gdrive-client-id';
 const GDRIVE_OAUTH_CALLBACK_KEY = 'gdrive_oauth_callback';
+const GDRIVE_CODE_VERIFIER_KEY = 'gdrive_code_verifier';
+const OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const DEFAULT_CLIENT_ID = '838239311300-ji616dlcecp6upb9417t6jf0agqh7mt0.apps.googleusercontent.com';
+const GDRIVE_NATIVE_REDIRECT_URI_KEY = 'gdrive-native-redirect-uri';
+export const NATIVE_APP_SCHEME = 'com.apartmentmanager.app';
 
 interface TokenClient {
   requestAccessToken: (overrides?: { prompt?: string }) => void;
@@ -45,8 +49,13 @@ export class GoogleDriveService {
 
   readonly connected = this.connectedSignal.asReadonly();
   readonly clientId = signal<string>(this.loadClientId());
+  readonly nativeRedirectUri = signal<string>(this.loadNativeRedirectUri());
   readonly lastError = signal<string | null>(null);
   readonly isSaving = signal<boolean>(false);
+
+  get isNative(): boolean {
+    return Capacitor.isNativePlatform();
+  }
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
@@ -74,6 +83,28 @@ export class GoogleDriveService {
     return false;
   }
 
+  private async exchangeCodeForToken(code: string, codeVerifier: string): Promise<string | null> {
+    const body = new URLSearchParams({
+      code,
+      code_verifier: codeVerifier,
+      client_id: this.clientId(),
+      redirect_uri: this.getRedirectUri(),
+      grant_type: 'authorization_code',
+    });
+    const res = await fetch(OAUTH_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { error?: string };
+      this.lastError.set(err.error || `Token exchange failed: ${res.status}`);
+      return null;
+    }
+    const data = (await res.json()) as { access_token: string };
+    return data.access_token || null;
+  }
+
   private handleOAuthFromUrl(url: string): void {
     try {
       const parsed = new URL(url);
@@ -82,6 +113,26 @@ export class GoogleDriveService {
       const s = fromHash || fromSearch;
       if (!s) return;
       const params = new URLSearchParams(s);
+      const code = params.get('code');
+      const error = params.get('error');
+      if (error) {
+        this.lastError.set(error);
+        return;
+      }
+      if (code) {
+        const verifier = sessionStorage.getItem(GDRIVE_CODE_VERIFIER_KEY);
+        sessionStorage.removeItem(GDRIVE_CODE_VERIFIER_KEY);
+        if (verifier) {
+          this.exchangeCodeForToken(code, verifier).then((token) => {
+            if (token) {
+              this.accessToken = token;
+              this.connectedSignal.set(true);
+              this.lastError.set(null);
+            }
+          });
+        }
+        return;
+      }
       if (this.applyOAuthParams(params)) {
         try {
           sessionStorage.removeItem(GDRIVE_OAUTH_CALLBACK_KEY);
@@ -108,13 +159,32 @@ export class GoogleDriveService {
     if (!params) {
       const hash = window.location.hash?.slice(1);
       const search = window.location.search?.slice(1);
-      const s = (hash && (hash.includes('access_token=') || hash.includes('error='))) ? hash
-        : (search && (search.includes('access_token=') || search.includes('error='))) ? search
+      const s = (hash && (hash.includes('access_token=') || hash.includes('error=') || hash.includes('code='))) ? hash
+        : (search && (search.includes('access_token=') || search.includes('error=') || search.includes('code='))) ? search
           : null;
       if (!s) return;
       params = new URLSearchParams(s);
     }
-    if (!params || !this.applyOAuthParams(params)) return;
+    if (!params) return;
+    const code = params.get('code');
+    if (code) {
+      const verifier = sessionStorage.getItem(GDRIVE_CODE_VERIFIER_KEY);
+      sessionStorage.removeItem(GDRIVE_CODE_VERIFIER_KEY);
+      if (verifier) {
+        this.exchangeCodeForToken(code, verifier).then((token) => {
+          if (token) {
+            this.accessToken = token;
+            this.connectedSignal.set(true);
+            this.lastError.set(null);
+          }
+          if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', window.location.pathname || '/');
+          }
+        });
+      }
+      return;
+    }
+    if (!this.applyOAuthParams(params)) return;
     if (typeof window !== 'undefined') {
       const path = (window.location.pathname || '/') + (window.location.search || '');
       window.history.replaceState(null, '', path);
@@ -123,6 +193,23 @@ export class GoogleDriveService {
 
   private useRedirectFlow(): boolean {
     return Capacitor.isNativePlatform();
+  }
+
+  private randomString(length: number): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    const arr = new Uint8Array(length);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, (b) => chars[b % chars.length]).join('');
+  }
+
+  private async generateCodeChallenge(verifier: string): Promise<string> {
+    const data = new TextEncoder().encode(verifier);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(digest)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    return b64;
   }
 
   private loadFileId(): string | null {
@@ -142,8 +229,26 @@ export class GoogleDriveService {
     }
   }
 
+  private loadNativeRedirectUri(): string {
+    return typeof localStorage !== 'undefined' ? (localStorage.getItem(GDRIVE_NATIVE_REDIRECT_URI_KEY) ?? '') : '';
+  }
+
+  setNativeRedirectUri(uri: string): void {
+    const trimmed = uri?.trim() ?? '';
+    this.nativeRedirectUri.set(trimmed);
+    if (trimmed) {
+      localStorage.setItem(GDRIVE_NATIVE_REDIRECT_URI_KEY, trimmed);
+    } else {
+      localStorage.removeItem(GDRIVE_NATIVE_REDIRECT_URI_KEY);
+    }
+  }
+
   getRedirectUri(): string {
-    return typeof window !== 'undefined' ? window.location.origin : '';
+    if (typeof window === 'undefined') return '';
+    if (Capacitor.isNativePlatform()) {
+      return this.nativeRedirectUri() || '';
+    }
+    return window.location.origin;
   }
 
   private storeFileId(id: string | null): void {
@@ -211,12 +316,27 @@ export class GoogleDriveService {
     }
     this.lastError.set(null);
     if (this.useRedirectFlow()) {
-      const redirectUri = window.location.origin;
+      const redirectUri = this.getRedirectUri();
+      if (!redirectUri || !redirectUri.startsWith('https://')) {
+        this.lastError.set('Set Native redirect URL (https) in settings — your app URL + /oauth-redirect');
+        return false;
+      }
+      const verifier = this.randomString(64);
+      const challenge = await this.generateCodeChallenge(verifier);
+      try {
+        sessionStorage.setItem(GDRIVE_CODE_VERIFIER_KEY, verifier);
+      } catch {
+        this.lastError.set('Storage unavailable');
+        return false;
+      }
       const params = new URLSearchParams({
         client_id: id,
-        redirect_uri: redirectUri,
-        response_type: 'token',
+        redirect_uri: this.getRedirectUri(),
+        response_type: 'code',
         scope: DRIVE_SCOPE,
+        code_challenge: challenge,
+        code_challenge_method: 'S256',
+        access_type: 'offline',
       });
       window.location.href = `${OAUTH_AUTH_URL}?${params.toString()}`;
       return true;

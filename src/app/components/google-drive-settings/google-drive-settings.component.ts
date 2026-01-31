@@ -26,9 +26,28 @@ import { GoogleDriveService } from '../../services/google-drive.service';
               placeholder="xxx.apps.googleusercontent.com"
             />
           </div>
-          <p class="redirect-uri-help">
-            Add this to <strong>Authorized redirect URIs</strong> in your OAuth client: <code class="redirect-uri-value">{{ redirectUri }}</code>
-          </p>
+          @if (gdrive.isNative) {
+            <div class="form-group">
+              <label>Native redirect URL (https)</label>
+              <input
+                type="url"
+                [ngModel]="gdrive.nativeRedirectUri()"
+                (ngModelChange)="gdrive.setNativeRedirectUri($event)"
+                placeholder="https://yourdomain.com/oauth-redirect"
+              />
+              <p class="field-help">Your app URL + <code>/oauth-redirect</code>. Add this to Authorized redirect URIs. After auth, Google opens this URL and the page redirects back to the app.</p>
+            </div>
+          }
+          @if (!gdrive.isNative) {
+            <p class="redirect-uri-help">
+              Add this to <strong>Authorized redirect URIs</strong>: <code class="redirect-uri-value">{{ redirectUri }}</code>
+            </p>
+          }
+          @if (gdrive.isNative && gdrive.nativeRedirectUri()) {
+            <p class="redirect-uri-help">
+              Add this to <strong>Authorized redirect URIs</strong>: <code class="redirect-uri-value">{{ gdrive.nativeRedirectUri() }}</code>
+            </p>
+          }
           @if (lastError()) {
             <p class="error-text">{{ lastError() }}</p>
           }
@@ -151,6 +170,16 @@ import { GoogleDriveService } from '../../services/google-drive.service';
       outline: none;
       border-color: var(--color-primary);
     }
+    .field-help {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      margin: var(--spacing-xs) 0 0 0;
+      line-height: 1.4;
+    }
+    .field-help code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+    }
     .redirect-uri-help {
       font-size: 0.8rem;
       color: var(--color-text-secondary);
@@ -244,7 +273,7 @@ import { GoogleDriveService } from '../../services/google-drive.service';
   `],
 })
 export class GoogleDriveSettingsComponent implements OnInit {
-  private gdrive = inject(GoogleDriveService);
+  gdrive = inject(GoogleDriveService);
 
   clientIdInput = signal('');
   connected = this.gdrive.connected;

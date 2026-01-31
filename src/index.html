@@ -9,7 +9,7 @@
       (function() {
         var h = window.location.hash && window.location.hash.slice(1);
         var q = window.location.search && window.location.search.slice(1);
-        var s = (h && (h.indexOf('access_token=') !== -1 || h.indexOf('error=') !== -1)) ? h : (q && (q.indexOf('access_token=') !== -1 || q.indexOf('error=') !== -1)) ? q : '';
+        var s = (h && (h.indexOf('access_token=') !== -1 || h.indexOf('error=') !== -1 || h.indexOf('code=') !== -1)) ? h : (q && (q.indexOf('access_token=') !== -1 || q.indexOf('error=') !== -1 || q.indexOf('code=') !== -1)) ? q : '';
         if (s) {
           try { sessionStorage.setItem('gdrive_oauth_callback', s); } catch (e) {}
           window.history.replaceState(null, '', window.location.pathname || '/');
