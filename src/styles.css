@@ -65,10 +65,23 @@ body {
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   line-height: 1.6;
+  -webkit-tap-highlight-color: transparent;
 }
 
 input, select, button {
   font-family: inherit;
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 15px;
+  }
+
+  select,
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+  }
 }
 
 ::-webkit-scrollbar {

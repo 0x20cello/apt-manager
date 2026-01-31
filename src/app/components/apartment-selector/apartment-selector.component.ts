@@ -36,6 +36,7 @@ import { ApartmentService } from '../../services/apartment.service';
 
     .apartment-select {
       padding: var(--spacing-sm) var(--spacing-md);
+      min-height: 44px;
       border: 1px solid var(--color-border);
       border-radius: var(--border-radius-md);
       background: var(--color-card-bg);
@@ -46,6 +47,17 @@ import { ApartmentService } from '../../services/apartment.service';
       cursor: pointer;
       transition: all 0.2s ease;
       min-width: 180px;
+    }
+
+    @media (max-width: 768px) {
+      .apartment-selector {
+        width: 100%;
+      }
+
+      .apartment-select {
+        flex: 1;
+        min-width: 0;
+      }
     }
 
     .apartment-select:hover {

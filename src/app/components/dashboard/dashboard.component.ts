@@ -242,6 +242,8 @@ import { Tenant, Room } from '../../models/apartment.model';
     @media (max-width: 768px) {
       .dashboard-container {
         padding: var(--spacing-md);
+        padding-left: max(var(--spacing-md), env(safe-area-inset-left));
+        padding-right: max(var(--spacing-md), env(safe-area-inset-right));
       }
 
       .metrics-columns {

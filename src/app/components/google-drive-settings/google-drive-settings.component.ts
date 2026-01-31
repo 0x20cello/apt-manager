@@ -69,6 +69,25 @@ import { GoogleDriveService } from '../../services/google-drive.service';
       max-width: 480px;
       width: 100%;
     }
+
+    @media (max-width: 768px) {
+      .gdrive-modal {
+        padding: var(--spacing-md);
+        padding-left: max(var(--spacing-md), env(safe-area-inset-left));
+        padding-right: max(var(--spacing-md), env(safe-area-inset-right));
+        align-items: flex-start;
+      }
+
+      .modal-content {
+        max-height: calc(100vh - 2 * var(--spacing-md) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        overflow-y: auto;
+      }
+
+      .btn-close {
+        min-width: 44px;
+        min-height: 44px;
+      }
+    }
     .modal-header {
       display: flex;
       justify-content: space-between;

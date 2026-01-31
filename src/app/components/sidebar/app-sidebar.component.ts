@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ApartmentService } from '../../services/apartment.service';
 import { GoogleDriveService } from '../../services/google-drive.service';
+import { LayoutService } from '../../services/layout.service';
 import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-drive-settings.component';
 
 @Component({
@@ -15,31 +16,31 @@ import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-dr
         <h3 class="nav-section-title">Navigation</h3>
         <ul class="nav-list">
           <li class="nav-item">
-            <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
+            <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link" (click)="layout.closeMobileMenu()">
               <span class="nav-icon">📊</span>
               Dashboard
             </a>
           </li>
           <li class="nav-item">
-            <a routerLink="/expenses" routerLinkActive="active" class="nav-link">
+            <a routerLink="/expenses" routerLinkActive="active" class="nav-link" (click)="layout.closeMobileMenu()">
               <span class="nav-icon">💼</span>
               Expenses
             </a>
           </li>
           <li class="nav-item">
-            <a routerLink="/rooms" routerLinkActive="active" class="nav-link">
+            <a routerLink="/rooms" routerLinkActive="active" class="nav-link" (click)="layout.closeMobileMenu()">
               <span class="nav-icon">🚪</span>
               Rooms
             </a>
           </li>
           <li class="nav-item">
-            <a routerLink="/tenants" routerLinkActive="active" class="nav-link">
+            <a routerLink="/tenants" routerLinkActive="active" class="nav-link" (click)="layout.closeMobileMenu()">
               <span class="nav-icon">👥</span>
               Tenants
             </a>
           </li>
           <li class="nav-item">
-            <a routerLink="/bill-calculator" routerLinkActive="active" class="nav-link">
+            <a routerLink="/bill-calculator" routerLinkActive="active" class="nav-link" (click)="layout.closeMobileMenu()">
               <span class="nav-icon">💰</span>
               Bill Calculator
             </a>
@@ -84,12 +85,32 @@ import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-dr
   styles: [`
     .sidebar {
       width: 280px;
+      max-width: 85vw;
       background: var(--color-card-bg);
       border-right: 1px solid var(--color-border);
       display: flex;
       flex-direction: column;
       height: 100%;
       overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1001;
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
+        box-shadow: var(--shadow-xl);
+        padding-top: env(safe-area-inset-top);
+      }
+
+      :host-context(.sidebar-open) .sidebar {
+        transform: translateX(0);
+      }
     }
 
     .sidebar-nav {
@@ -120,7 +141,8 @@ import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-dr
       display: flex;
       align-items: center;
       gap: var(--spacing-sm);
-      padding: var(--spacing-sm) var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      min-height: 44px;
       color: var(--color-text-secondary);
       text-decoration: none;
       border-radius: var(--border-radius-md);
@@ -190,7 +212,8 @@ import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-dr
       align-items: center;
       justify-content: center;
       gap: var(--spacing-sm);
-      padding: var(--spacing-sm) var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      min-height: 44px;
       border: none;
       border-radius: var(--border-radius-md);
       background: var(--color-primary);
@@ -232,7 +255,8 @@ import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-dr
       display: flex;
       align-items: center;
       gap: var(--spacing-sm);
-      padding: var(--spacing-sm) var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      min-height: 44px;
       border: 1px solid var(--color-border);
       border-radius: var(--border-radius-md);
       background: var(--color-card-bg);
@@ -274,6 +298,7 @@ import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-dr
 export class AppSidebarComponent {
   private apartmentService = inject(ApartmentService);
   private googleDrive = inject(GoogleDriveService);
+  layout = inject(LayoutService);
 
   newApartmentName = signal('');
   showGoogleDrive = signal(false);
