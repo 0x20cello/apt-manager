@@ -2,12 +2,13 @@ import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AppHeaderComponent } from './components/header/app-header.component';
 import { AppSidebarComponent } from './components/sidebar/app-sidebar.component';
+import { GoogleDriveSettingsComponent } from './components/google-drive-settings/google-drive-settings.component';
 import { LayoutService } from './services/layout.service';
 
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, AppHeaderComponent, AppSidebarComponent],
+  imports: [RouterOutlet, AppHeaderComponent, AppSidebarComponent, GoogleDriveSettingsComponent],
   template: `
     <div class="app-container" [class.sidebar-open]="layout.mobileMenuOpen()">
       <div class="backdrop" (click)="layout.closeMobileMenu()"></div>
@@ -19,6 +20,9 @@ import { LayoutService } from './services/layout.service';
         </main>
       </div>
     </div>
+    @if (layout.showGoogleDriveModal()) {
+      <app-google-drive-settings (close)="layout.closeGoogleDriveModal()" />
+    }
   `,
   styles: [`
     :host {

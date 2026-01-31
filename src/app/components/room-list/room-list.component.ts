@@ -86,6 +86,26 @@ import { Room } from '../../models/apartment.model';
       margin-bottom: var(--spacing-md);
     }
 
+    @media (max-width: 768px) {
+      .section-header {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+      }
+
+      .room-item {
+        flex-wrap: wrap;
+      }
+
+      .room-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .add-form input {
+        min-height: 44px;
+      }
+    }
+
     .section-header h3 {
       color: var(--color-text-primary);
       font-size: 1rem;

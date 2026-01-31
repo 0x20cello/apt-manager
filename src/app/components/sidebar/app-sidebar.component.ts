@@ -4,12 +4,11 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ApartmentService } from '../../services/apartment.service';
 import { GoogleDriveService } from '../../services/google-drive.service';
 import { LayoutService } from '../../services/layout.service';
-import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-drive-settings.component';
 
 @Component({
   selector: 'app-sidebar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, RouterLinkActive, GoogleDriveSettingsComponent],
+  imports: [FormsModule, RouterLink, RouterLinkActive],
   template: `
     <aside class="sidebar">
       <nav class="sidebar-nav">
@@ -67,7 +66,7 @@ import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-dr
         <section class="form-section settings-section">
           <h3 class="form-section-title">Data</h3>
           <div class="settings-actions">
-            <button class="btn-settings" (click)="showGoogleDrive.set(true)" [class.active]="gdriveConnected()">
+            <button class="btn-settings" (click)="layout.openGoogleDriveModal()" [class.active]="gdriveConnected()">
               <span class="icon">📁</span> Save to Drive
               @if (gdriveConnected()) {
                 <span class="sync-indicator"></span>
@@ -76,10 +75,6 @@ import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-dr
           </div>
         </section>
       </div>
-
-      @if (showGoogleDrive()) {
-        <app-google-drive-settings (close)="showGoogleDrive.set(false)" />
-      }
     </aside>
   `,
   styles: [`

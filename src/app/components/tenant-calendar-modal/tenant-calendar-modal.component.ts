@@ -87,6 +87,21 @@ import { TenantCalendarComponent } from '../tenant-calendar/tenant-calendar.comp
     .modal-body {
       padding: var(--spacing-lg);
     }
+
+    @media (max-width: 768px) {
+      .modal-backdrop {
+        padding: max(var(--spacing-md), env(safe-area-inset-top)) max(var(--spacing-md), env(safe-area-inset-right)) max(var(--spacing-md), env(safe-area-inset-bottom)) max(var(--spacing-md), env(safe-area-inset-left));
+        align-items: flex-start;
+      }
+
+      .modal-content {
+        max-height: 90dvh;
+      }
+
+      .modal-header h2 {
+        font-size: 1rem;
+      }
+    }
   `],
 })
 export class TenantCalendarModalComponent {

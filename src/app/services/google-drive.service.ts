@@ -1,6 +1,8 @@
 import { Injectable, signal } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 
 const GDRIVE_SCRIPT = 'https://accounts.google.com/gsi/client';
+const OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const FILE_NAME = 'part-manager.json';
 const GDRIVE_FILE_ID_KEY = 'gdrive-file-id';
@@ -41,6 +43,33 @@ export class GoogleDriveService {
   readonly clientId = signal<string>(this.loadClientId());
   readonly lastError = signal<string | null>(null);
   readonly isSaving = signal<boolean>(false);
+
+  constructor() {
+    this.handleOAuthCallback();
+  }
+
+  private handleOAuthCallback(): void {
+    const hash = window.location.hash?.slice(1);
+    if (!hash) return;
+    const params = new URLSearchParams(hash);
+    const token = params.get('access_token');
+    const error = params.get('error');
+    if (error) {
+      this.lastError.set(error);
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      return;
+    }
+    if (token) {
+      this.accessToken = token;
+      this.connectedSignal.set(true);
+      this.lastError.set(null);
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }
+
+  private useRedirectFlow(): boolean {
+    return Capacitor.isNativePlatform();
+  }
 
   private loadFileId(): string | null {
     return localStorage.getItem(GDRIVE_FILE_ID_KEY);
@@ -123,6 +152,17 @@ export class GoogleDriveService {
       return false;
     }
     this.lastError.set(null);
+    if (this.useRedirectFlow()) {
+      const redirectUri = window.location.origin;
+      const params = new URLSearchParams({
+        client_id: id,
+        redirect_uri: redirectUri,
+        response_type: 'token',
+        scope: DRIVE_SCOPE,
+      });
+      window.location.href = `${OAUTH_AUTH_URL}?${params.toString()}`;
+      return true;
+    }
     try {
       await this.loadScript();
       this.initTokenClient();
@@ -153,7 +193,7 @@ export class GoogleDriveService {
 
   disconnect(): void {
     if (this.accessToken) {
-      window.google?.accounts?.oauth2?.revoke(this.accessToken, () => {});
+      window.google?.accounts?.oauth2?.revoke(this.accessToken, () => { });
     }
     this.accessToken = null;
     this.fileId = null;
@@ -166,7 +206,7 @@ export class GoogleDriveService {
     if (!this.connectedSignal() || !this.accessToken) return;
     this.isSaving.set(true);
     this.doSave(jsonPayload)
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => this.isSaving.set(false));
   }
 

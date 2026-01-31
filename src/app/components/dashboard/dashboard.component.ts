@@ -246,8 +246,22 @@ import { Tenant, Room } from '../../models/apartment.model';
         padding-right: max(var(--spacing-md), env(safe-area-inset-right));
       }
 
+      .apartment-title-input {
+        font-size: 1.5rem;
+      }
+
       .metrics-columns {
         grid-template-columns: 1fr;
+      }
+
+      .collection-item {
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+      }
+
+      .collection-amount {
+        width: 100%;
+        align-items: flex-start;
       }
     }
 

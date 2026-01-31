@@ -79,6 +79,18 @@ import { ExpenseListComponent } from '../expense-list/expense-list.component';
     .expenses-content {
       max-width: 800px;
     }
+
+    @media (max-width: 768px) {
+      .expenses-page {
+        padding: var(--spacing-md);
+        padding-left: max(var(--spacing-md), env(safe-area-inset-left));
+        padding-right: max(var(--spacing-md), env(safe-area-inset-right));
+      }
+
+      .page-header h1 {
+        font-size: 1.5rem;
+      }
+    }
   `],
 })
 export class ExpensesComponent {

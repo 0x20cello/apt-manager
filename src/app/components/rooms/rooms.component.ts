@@ -79,6 +79,18 @@ import { RoomListComponent } from '../room-list/room-list.component';
     .rooms-content {
       max-width: 800px;
     }
+
+    @media (max-width: 768px) {
+      .rooms-page {
+        padding: var(--spacing-md);
+        padding-left: max(var(--spacing-md), env(safe-area-inset-left));
+        padding-right: max(var(--spacing-md), env(safe-area-inset-right));
+      }
+
+      .page-header h1 {
+        font-size: 1.5rem;
+      }
+    }
   `],
 })
 export class RoomsComponent {

@@ -297,6 +297,22 @@ interface TenantBill {
       font-weight: 700;
       color: var(--color-primary);
     }
+
+    @media (max-width: 768px) {
+      .bill-calculator-page {
+        padding: var(--spacing-md);
+        padding-left: max(var(--spacing-md), env(safe-area-inset-left));
+        padding-right: max(var(--spacing-md), env(safe-area-inset-right));
+      }
+
+      .page-header h1 {
+        font-size: 1.5rem;
+      }
+
+      .form-group input {
+        min-height: 44px;
+      }
+    }
   `],
 })
 export class BillCalculatorComponent {

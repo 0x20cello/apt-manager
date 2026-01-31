@@ -226,6 +226,27 @@ import { TenantCalendarModalComponent } from '../tenant-calendar-modal/tenant-ca
       margin-bottom: var(--spacing-md);
     }
 
+    @media (max-width: 768px) {
+      .section-header {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+      }
+
+      .modal-backdrop {
+        padding: max(var(--spacing-md), env(safe-area-inset-top)) max(var(--spacing-md), env(safe-area-inset-right)) max(var(--spacing-md), env(safe-area-inset-bottom)) max(var(--spacing-md), env(safe-area-inset-left));
+      }
+
+      .edit-modal {
+        max-height: 90dvh;
+      }
+
+      .add-form input,
+      .add-form select,
+      .add-form textarea {
+        min-height: 44px;
+      }
+    }
+
     .section-header h3 {
       color: var(--color-text-primary);
       font-size: 1rem;
@@ -344,6 +365,7 @@ import { TenantCalendarModalComponent } from '../tenant-calendar-modal/tenant-ca
       background: var(--color-card-bg);
       border: 1px solid var(--color-border);
       border-radius: var(--border-radius-lg);
+      -webkit-overflow-scrolling: touch;
     }
 
     .tenants-table {
