@@ -1,14 +1,14 @@
-import { Component, inject, signal, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ApartmentService } from '../../services/apartment.service';
-import { CloudSyncService } from '../../services/cloud-sync.service';
-import { CloudSyncSettingsComponent } from '../cloud-sync-settings/cloud-sync-settings.component';
+import { GoogleDriveService } from '../../services/google-drive.service';
+import { GoogleDriveSettingsComponent } from '../google-drive-settings/google-drive-settings.component';
 
 @Component({
   selector: 'app-sidebar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, RouterLinkActive, CloudSyncSettingsComponent],
+  imports: [FormsModule, RouterLink, RouterLinkActive, GoogleDriveSettingsComponent],
   template: `
     <aside class="sidebar">
       <nav class="sidebar-nav">
@@ -64,33 +64,20 @@ import { CloudSyncSettingsComponent } from '../cloud-sync-settings/cloud-sync-se
         </section>
 
         <section class="form-section settings-section">
-          <h3 class="form-section-title">Data Management</h3>
+          <h3 class="form-section-title">Data</h3>
           <div class="settings-actions">
-            <button class="btn-settings" (click)="exportData()">
-              <span class="icon">📥</span> Export JSON
-            </button>
-            <button class="btn-settings" (click)="triggerImport()">
-              <span class="icon">📤</span> Import JSON
-            </button>
-            <button class="btn-settings" (click)="showCloudSync.set(true)" [class.active]="syncEnabled()">
-              <span class="icon">☁️</span> Cloud Sync
-              @if (syncEnabled()) {
+            <button class="btn-settings" (click)="showGoogleDrive.set(true)" [class.active]="gdriveConnected()">
+              <span class="icon">📁</span> Save to Drive
+              @if (gdriveConnected()) {
                 <span class="sync-indicator"></span>
               }
             </button>
-            <input
-              type="file"
-              #fileInput
-              accept=".json"
-              (change)="importData($event)"
-              style="display: none;"
-            />
           </div>
         </section>
       </div>
 
-      @if (showCloudSync()) {
-        <app-cloud-sync-settings (close)="showCloudSync.set(false)" />
+      @if (showGoogleDrive()) {
+        <app-google-drive-settings (close)="showGoogleDrive.set(false)" />
       }
     </aside>
   `,
@@ -285,13 +272,12 @@ import { CloudSyncSettingsComponent } from '../cloud-sync-settings/cloud-sync-se
   `],
 })
 export class AppSidebarComponent {
-  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   private apartmentService = inject(ApartmentService);
-  private cloudSync = inject(CloudSyncService);
+  private googleDrive = inject(GoogleDriveService);
 
   newApartmentName = signal('');
-  showCloudSync = signal(false);
-  syncEnabled = this.cloudSync.syncEnabled$;
+  showGoogleDrive = signal(false);
+  gdriveConnected = this.googleDrive.connected;
 
   addApartment(): void {
     const name = this.newApartmentName().trim();
@@ -299,47 +285,5 @@ export class AppSidebarComponent {
       this.apartmentService.addApartment(name);
       this.newApartmentName.set('');
     }
-  }
-
-  exportData(): void {
-    const data = this.apartmentService.exportData();
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `apartment-manager-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
-
-  triggerImport(): void {
-    this.fileInput.nativeElement.click();
-  }
-
-  importData(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target?.result as string;
-        const data = JSON.parse(content);
-        if (Array.isArray(data)) {
-          if (confirm('This will replace all current data. Are you sure?')) {
-            this.apartmentService.importData(data);
-            input.value = '';
-          }
-        } else {
-          alert('Invalid JSON format. Expected an array of apartments.');
-        }
-      } catch (error) {
-        alert('Error parsing JSON file. Please check the file format.');
-      }
-    };
-    reader.readAsText(file);
   }
 }

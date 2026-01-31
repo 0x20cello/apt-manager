@@ -31,51 +31,66 @@ import { Tenant, Room } from '../../models/apartment.model';
           <section class="metrics-section">
             <h3 class="section-title">Financial Summary</h3>
             @let metrics = getMetrics();
-            <div class="metrics-grid">
-              <app-metrics-card
-                label="Monthly Revenue"
-                [value]="metrics.monthlyRevenue"
-                type="revenue"
-                [minValue]="metrics.minMonthlyRevenue"
-                [maxValue]="metrics.maxMonthlyRevenue"
-                [showRange]="true"
-              />
-              <app-metrics-card
-                label="Yearly Revenue"
-                [value]="metrics.yearlyRevenue"
-                type="revenue"
-                [minValue]="metrics.minYearlyRevenue"
-                [maxValue]="metrics.maxYearlyRevenue"
-                [showRange]="true"
-              />
-              <app-metrics-card
-                label="Monthly Costs"
-                [value]="metrics.monthlyCosts"
-                type="costs"
-              />
-              <app-metrics-card
-                label="Yearly Costs"
-                [value]="metrics.yearlyCosts"
-                type="costs"
-              />
-              <app-metrics-card
-                label="Monthly Profit"
-                [value]="metrics.monthlyProfit"
-                type="profit"
-                [isNegative]="metrics.monthlyProfit < 0"
-                [minValue]="metrics.minMonthlyProfit"
-                [maxValue]="metrics.maxMonthlyProfit"
-                [showRange]="true"
-              />
-              <app-metrics-card
-                label="Yearly Profit"
-                [value]="metrics.yearlyProfit"
-                type="profit"
-                [isNegative]="metrics.yearlyProfit < 0"
-                [minValue]="metrics.minYearlyProfit"
-                [maxValue]="metrics.maxYearlyProfit"
-                [showRange]="true"
-              />
+            <div class="metrics-columns">
+              <div class="metrics-column">
+                <h4 class="column-title">Revenue</h4>
+                <div class="column-cards">
+                  <app-metrics-card
+                    label="Monthly Revenue"
+                    [value]="metrics.monthlyRevenue"
+                    type="revenue"
+                    [minValue]="metrics.minMonthlyRevenue"
+                    [maxValue]="metrics.maxMonthlyRevenue"
+                    [showRange]="true"
+                  />
+                  <app-metrics-card
+                    label="Yearly Revenue"
+                    [value]="metrics.yearlyRevenue"
+                    type="revenue"
+                    [minValue]="metrics.minYearlyRevenue"
+                    [maxValue]="metrics.maxYearlyRevenue"
+                    [showRange]="true"
+                  />
+                </div>
+              </div>
+              <div class="metrics-column">
+                <h4 class="column-title">Costs</h4>
+                <div class="column-cards">
+                  <app-metrics-card
+                    label="Monthly Costs"
+                    [value]="metrics.monthlyCosts"
+                    type="costs"
+                  />
+                  <app-metrics-card
+                    label="Yearly Costs"
+                    [value]="metrics.yearlyCosts"
+                    type="costs"
+                  />
+                </div>
+              </div>
+              <div class="metrics-column">
+                <h4 class="column-title">Profit</h4>
+                <div class="column-cards">
+                  <app-metrics-card
+                    label="Monthly Profit"
+                    [value]="metrics.monthlyProfit"
+                    type="profit"
+                    [isNegative]="metrics.monthlyProfit < 0"
+                    [minValue]="metrics.minMonthlyProfit"
+                    [maxValue]="metrics.maxMonthlyProfit"
+                    [showRange]="true"
+                  />
+                  <app-metrics-card
+                    label="Yearly Profit"
+                    [value]="metrics.yearlyProfit"
+                    type="profit"
+                    [isNegative]="metrics.yearlyProfit < 0"
+                    [minValue]="metrics.minYearlyProfit"
+                    [maxValue]="metrics.maxYearlyProfit"
+                    [showRange]="true"
+                  />
+                </div>
+              </div>
             </div>
           </section>
 
@@ -189,14 +204,37 @@ import { Tenant, Room } from '../../models/apartment.model';
       margin: 0 0 var(--spacing-lg) 0;
     }
 
-    .metrics-grid {
+    .metrics-columns {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: var(--spacing-lg);
+      gap: var(--spacing-xl);
+    }
+
+    .metrics-column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      align-items: stretch;
+    }
+
+    .column-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin: 0 0 var(--spacing-xs) 0;
+      padding-left: calc(3px + var(--spacing-md));
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .column-cards {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
     }
 
     @media (max-width: 1024px) {
-      .metrics-grid {
+      .metrics-columns {
         grid-template-columns: repeat(2, 1fr);
       }
     }
@@ -206,7 +244,7 @@ import { Tenant, Room } from '../../models/apartment.model';
         padding: var(--spacing-md);
       }
 
-      .metrics-grid {
+      .metrics-columns {
         grid-template-columns: 1fr;
       }
     }

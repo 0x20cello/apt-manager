@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { Apartment, Room, Expense, ApartmentMetrics, ExpenseCadence, Tenant } from '../models/apartment.model';
 import { CloudSyncService } from './cloud-sync.service';
+import { GoogleDriveService } from './google-drive.service';
 
 const STORAGE_KEY = 'apartment-manager-data';
 const CURRENT_APARTMENT_KEY = 'current-apartment-id';
@@ -8,6 +9,7 @@ const CURRENT_APARTMENT_KEY = 'current-apartment-id';
 @Injectable({ providedIn: 'root' })
 export class ApartmentService {
     private cloudSync = inject(CloudSyncService);
+    private googleDrive = inject(GoogleDriveService);
 
     private readonly apartmentsSignal = signal<Apartment[]>(this.loadFromStorage());
     private readonly currentApartmentIdSignal = signal<string | null>(
@@ -87,6 +89,9 @@ export class ApartmentService {
     private saveToStorage(): void {
         const data = JSON.stringify(this.apartmentsSignal());
         localStorage.setItem(STORAGE_KEY, data);
+        if (this.googleDrive.connected()) {
+            this.googleDrive.saveToDrive(this.exportData());
+        }
     }
 
     private saveCurrentApartmentId(id: string | null): void {
