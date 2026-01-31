@@ -1,4 +1,5 @@
 import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ApartmentService } from '../../services/apartment.service';
 import { MetricsCardComponent } from '../metrics-card/metrics-card.component';
 import { Tenant, Room } from '../../models/apartment.model';
@@ -6,7 +7,7 @@ import { Tenant, Room } from '../../models/apartment.model';
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MetricsCardComponent],
+  imports: [MetricsCardComponent, FormsModule],
   template: `
     <div class="dashboard-container">
       @if (!currentApartment()) {
@@ -18,7 +19,13 @@ import { Tenant, Room } from '../../models/apartment.model';
       } @else {
         <div class="dashboard-content">
           <div class="dashboard-header">
-            <h2 class="apartment-title">{{ currentApartment()!.name }}</h2>
+            <input
+              type="text"
+              class="apartment-title-input"
+              [value]="currentApartment()!.name"
+              (blur)="onApartmentNameChange($event)"
+              (keydown.enter)="blurTarget($event)"
+            />
           </div>
 
           <section class="metrics-section">
@@ -144,11 +151,31 @@ import { Tenant, Room } from '../../models/apartment.model';
       margin-bottom: var(--spacing-xl);
     }
 
-    .apartment-title {
+    .apartment-title-input {
       font-size: 2rem;
       font-weight: 700;
       color: var(--color-text-primary);
       margin: 0;
+      background: transparent;
+      border: 2px solid transparent;
+      border-radius: var(--border-radius-md);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      font-family: inherit;
+      width: 100%;
+      max-width: 600px;
+      transition: all 0.2s ease;
+    }
+
+    .apartment-title-input:hover {
+      border-color: var(--color-border);
+      background: var(--color-bg-secondary);
+    }
+
+    .apartment-title-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background: var(--color-card-bg);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 
     .metrics-section {
@@ -374,5 +401,23 @@ export class DashboardComponent {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+  }
+
+  onApartmentNameChange(event: Event): void {
+    const apartment = this.currentApartment();
+    if (!apartment) return;
+
+    const input = event.target as HTMLInputElement;
+    const newName = input.value.trim();
+    if (newName && newName !== apartment.name) {
+      this.apartmentService.updateApartmentName(apartment.id, newName);
+    } else {
+      // Reset to original name if empty or unchanged
+      input.value = apartment.name;
+    }
+  }
+
+  blurTarget(event: Event): void {
+    (event.target as HTMLElement).blur();
   }
 }
