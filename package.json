@@ -18,7 +18,8 @@
     "build:android": "ng build && npx cap sync android",
     "sync:android": "npx cap sync android",
     "open:android": "npx cap open android",
-    "apk": "ng build && npx cap sync android && cd android && ./gradlew assembleDebug"
+    "apk": "ng build && npx cap sync android && cd android && ./gradlew assembleDebug",
+    "deploy": "ng deploy part-manager"
   },
   "private": true,
   "dependencies": {
