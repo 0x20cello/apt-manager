@@ -15,6 +15,7 @@ const OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const DEFAULT_CLIENT_ID = '838239311300-ji616dlcecp6upb9417t6jf0agqh7mt0.apps.googleusercontent.com';
 const GDRIVE_NATIVE_REDIRECT_URI_KEY = 'gdrive-native-redirect-uri';
 export const NATIVE_APP_SCHEME = 'com.apartmentmanager.app';
+export const GDRIVE_CONFIG_LOADED_EVENT = 'gdrive-config-loaded';
 
 interface TokenClient {
   requestAccessToken: (overrides?: { prompt?: string }) => void;
@@ -78,6 +79,7 @@ export class GoogleDriveService {
       this.accessToken = token;
       this.connectedSignal.set(true);
       this.lastError.set(null);
+      this.triggerConfigLoad();
       return true;
     }
     return false;
@@ -128,6 +130,7 @@ export class GoogleDriveService {
               this.accessToken = token;
               this.connectedSignal.set(true);
               this.lastError.set(null);
+              this.triggerConfigLoad();
             }
           });
         }
@@ -176,6 +179,7 @@ export class GoogleDriveService {
             this.accessToken = token;
             this.connectedSignal.set(true);
             this.lastError.set(null);
+            this.triggerConfigLoad();
           }
           if (typeof window !== 'undefined') {
             window.history.replaceState(null, '', window.location.pathname || '/');
@@ -304,7 +308,16 @@ export class GoogleDriveService {
         this.lastError.set(null);
         this.accessToken = response.access_token;
         this.connectedSignal.set(true);
+        this.triggerConfigLoad();
       },
+    });
+  }
+
+  private triggerConfigLoad(): void {
+    this.loadFromDrive().then((json) => {
+      if (json && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(GDRIVE_CONFIG_LOADED_EVENT, { detail: json }));
+      }
     });
   }
 
@@ -378,6 +391,39 @@ export class GoogleDriveService {
     this.storeFileId(null);
     this.connectedSignal.set(false);
     this.lastError.set(null);
+  }
+
+  async loadFromDrive(): Promise<string | null> {
+    if (!this.accessToken) return null;
+    const token = this.accessToken;
+    let id = this.fileId;
+    if (!id) {
+      const listRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=name%3D'${encodeURIComponent(FILE_NAME)}'%20and%20'root'%20in%20parents&fields=files(id)`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (listRes.status === 401) {
+        this.connectedSignal.set(false);
+        this.accessToken = null;
+        return null;
+      }
+      if (!listRes.ok) return null;
+      const list = (await listRes.json()) as { files: { id: string }[] };
+      if (!list.files?.length) return null;
+      id = list.files[0].id;
+      this.fileId = id;
+      this.storeFileId(id);
+    }
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 401) {
+      this.connectedSignal.set(false);
+      this.accessToken = null;
+      return null;
+    }
+    if (!res.ok) return null;
+    return res.text();
   }
 
   saveToDrive(jsonPayload: string): void {

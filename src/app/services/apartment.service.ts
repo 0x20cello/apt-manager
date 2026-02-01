@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { Apartment, Room, Expense, ApartmentMetrics, ExpenseCadence, Tenant } from '../models/apartment.model';
 import { CloudSyncService } from './cloud-sync.service';
-import { GoogleDriveService } from './google-drive.service';
+import { GoogleDriveService, GDRIVE_CONFIG_LOADED_EVENT } from './google-drive.service';
 
 const STORAGE_KEY = 'apartment-manager-data';
 const CURRENT_APARTMENT_KEY = 'current-apartment-id';
@@ -29,7 +29,31 @@ export class ApartmentService {
 
     constructor() {
         this.initializeCloudSync();
-        
+
+        window.addEventListener(GDRIVE_CONFIG_LOADED_EVENT, ((event: CustomEvent<string>) => {
+            const json = event.detail;
+            if (!json) return;
+            try {
+                const data = JSON.parse(json) as Apartment[];
+                if (Array.isArray(data) && data.length >= 0) {
+                    this.isSyncingToCloud = true;
+                    const normalized = data.map((apt) => ({
+                        ...apt,
+                        tenants: apt.tenants || [],
+                    }));
+                    this.apartmentsSignal.set(normalized);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+                    const currentId = this.currentApartmentIdSignal();
+                    if (currentId) this.setCurrentApartment(currentId);
+                    setTimeout(() => {
+                        this.isSyncingToCloud = false;
+                    }, 100);
+                }
+            } catch {
+                //
+            }
+        }) as EventListener);
+
         effect(() => {
             const apartments = this.apartmentsSignal();
             if (!this.isSyncingToCloud) {

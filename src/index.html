@@ -2,30 +2,30 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <title>Apartment Manager</title>
-    <base href="/">
-    <script>
-      (function() {
-        var h = window.location.hash && window.location.hash.slice(1);
-        var q = window.location.search && window.location.search.slice(1);
-        var s = (h && (h.indexOf('access_token=') !== -1 || h.indexOf('error=') !== -1 || h.indexOf('code=') !== -1)) ? h : (q && (q.indexOf('access_token=') !== -1 || q.indexOf('error=') !== -1 || q.indexOf('code=') !== -1)) ? q : '';
-        if (s) {
-          try { sessionStorage.setItem('gdrive_oauth_callback', s); } catch (e) {}
-          window.history.replaceState(null, '', window.location.pathname || '/');
-        }
-      })();
-    </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
+  <meta charset="utf-8">
+  <title>Apartment Manager</title>
+  <base href="/">
+  <script>
+    (function () {
+      var h = window.location.hash && window.location.hash.slice(1);
+      var q = window.location.search && window.location.search.slice(1);
+      var s = (h && (h.indexOf('access_token=') !== -1 || h.indexOf('error=') !== -1 || h.indexOf('code=') !== -1)) ? h : (q && (q.indexOf('access_token=') !== -1 || q.indexOf('error=') !== -1 || q.indexOf('code=') !== -1)) ? q : '';
+      if (s) {
+        try { sessionStorage.setItem('gdrive_oauth_callback', s); } catch (e) { }
+        window.history.replaceState(null, '', window.location.pathname || '/');
+      }
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
 </head>
 
 <body>
-    <app-root></app-root>
+  <app-root></app-root>
 </body>
 
 </html>
