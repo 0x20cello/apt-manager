@@ -4,6 +4,8 @@ import { AppComponent } from './app/app.component';
 import { routes } from './app/routes/dashboard.route';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
+import { isDevMode } from '@angular/core';
+import { provideServiceWorker } from '@angular/service-worker';
 
 if (Capacitor.isNativePlatform()) {
     App.addListener('backButton', ({ canGoBack }) => {
@@ -16,6 +18,9 @@ if (Capacitor.isNativePlatform()) {
 }
 
 bootstrapApplication(AppComponent, {
-    providers: [provideRouter(routes)],
+    providers: [provideRouter(routes), provideServiceWorker('ngsw-worker.js', {
+            enabled: !isDevMode(),
+            registrationStrategy: 'registerWhenStable:30000'
+          })],
 }).catch((err) => console.error(err));
 

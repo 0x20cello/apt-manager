@@ -1,61 +1,67 @@
 {
-  "hash": "975eed5b",
-  "configHash": "2acc5d03",
-  "lockfileHash": "a2f43fc5",
-  "browserHash": "438afd4f",
+  "hash": "eb70bf6c",
+  "configHash": "74badf0c",
+  "lockfileHash": "20c0232d",
+  "browserHash": "2b07af23",
   "optimized": {
+    "@angular/common": {
+      "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
+      "file": "@angular_common.js",
+      "fileHash": "332f4336",
+      "needsInterop": false
+    },
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "f3dd8fcc",
+      "fileHash": "100c34eb",
       "needsInterop": false
     },
     "@angular/forms": {
       "src": "../../../../../../node_modules/@angular/forms/fesm2022/forms.mjs",
       "file": "@angular_forms.js",
-      "fileHash": "42a89f43",
+      "fileHash": "376c9191",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "188c2edd",
-      "needsInterop": false
-    },
-    "@capacitor/app": {
-      "src": "../../../../../../node_modules/@capacitor/app/dist/esm/index.js",
-      "file": "@capacitor_app.js",
-      "fileHash": "31da7ded",
-      "needsInterop": false
-    },
-    "@capacitor/core": {
-      "src": "../../../../../../node_modules/@capacitor/core/dist/index.js",
-      "file": "@capacitor_core.js",
-      "fileHash": "86e646b9",
+      "fileHash": "f03da1b9",
       "needsInterop": false
     },
     "@angular/router": {
       "src": "../../../../../../node_modules/@angular/router/fesm2022/router.mjs",
       "file": "@angular_router.js",
-      "fileHash": "98a5bf19",
+      "fileHash": "5f514784",
+      "needsInterop": false
+    },
+    "@angular/service-worker": {
+      "src": "../../../../../../node_modules/@angular/service-worker/fesm2022/service-worker.mjs",
+      "file": "@angular_service-worker.js",
+      "fileHash": "7157c4ec",
+      "needsInterop": false
+    },
+    "@capacitor/app": {
+      "src": "../../../../../../node_modules/@capacitor/app/dist/esm/index.js",
+      "file": "@capacitor_app.js",
+      "fileHash": "f11e06b5",
+      "needsInterop": false
+    },
+    "@capacitor/core": {
+      "src": "../../../../../../node_modules/@capacitor/core/dist/index.js",
+      "file": "@capacitor_core.js",
+      "fileHash": "c6f9702c",
       "needsInterop": false
     },
     "firebase/app": {
       "src": "../../../../../../node_modules/firebase/app/dist/esm/index.esm.js",
       "file": "firebase_app.js",
-      "fileHash": "23d139e7",
+      "fileHash": "ed444ec1",
       "needsInterop": false
     },
     "firebase/firestore": {
       "src": "../../../../../../node_modules/firebase/firestore/dist/esm/index.esm.js",
       "file": "firebase_firestore.js",
-      "fileHash": "a996f6a8",
-      "needsInterop": false
-    },
-    "@angular/common": {
-      "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
-      "file": "@angular_common.js",
-      "fileHash": "d66f78b3",
+      "fileHash": "9f36b2cf",
       "needsInterop": false
     }
   },
@@ -69,14 +75,14 @@
     "chunk-K2EMHAQO": {
       "file": "chunk-K2EMHAQO.js"
     },
-    "chunk-TD5AELMC": {
-      "file": "chunk-TD5AELMC.js"
+    "chunk-NNJOMH6I": {
+      "file": "chunk-NNJOMH6I.js"
     },
-    "chunk-7POUGFNB": {
-      "file": "chunk-7POUGFNB.js"
+    "chunk-FXTZ5F3V": {
+      "file": "chunk-FXTZ5F3V.js"
     },
-    "chunk-YVG3PWZG": {
-      "file": "chunk-YVG3PWZG.js"
+    "chunk-E44CIM7F": {
+      "file": "chunk-E44CIM7F.js"
     },
     "chunk-5K356HEJ": {
       "file": "chunk-5K356HEJ.js"
