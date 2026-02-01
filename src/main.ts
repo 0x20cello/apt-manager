@@ -1,5 +1,5 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withHashLocation } from '@angular/router';
 import { AppComponent } from './app/app.component';
 import { routes } from './app/routes/dashboard.route';
 import { Capacitor } from '@capacitor/core';
@@ -18,7 +18,7 @@ if (Capacitor.isNativePlatform()) {
 }
 
 bootstrapApplication(AppComponent, {
-    providers: [provideRouter(routes), provideServiceWorker('ngsw-worker.js', {
+    providers: [provideRouter(routes, withHashLocation()), provideServiceWorker('ngsw-worker.js', {
             enabled: !isDevMode(),
             registrationStrategy: 'registerWhenStable:30000'
           })],
