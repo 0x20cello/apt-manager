@@ -77,6 +77,16 @@ interface TenantBill {
                   <span class="summary-label">Bill Total:</span>
                   <span class="summary-value">{{ formatCurrency(billTotal()) }}</span>
                 </div>
+                <div class="summary-actions">
+                  <button class="btn-copy" (click)="copyCalculatorAsText()">
+                    Copy as TXT
+                  </button>
+                  @if (copyState() === 'success') {
+                    <span class="copy-feedback success">Copied</span>
+                  } @else if (copyState() === 'error') {
+                    <span class="copy-feedback error">Copy failed</span>
+                  }
+                </div>
               </div>
 
               <div class="tenants-list">
@@ -228,6 +238,44 @@ interface TenantBill {
       border-bottom: none;
     }
 
+    .summary-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-md);
+    }
+
+    .btn-copy {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      background: var(--color-card-bg);
+      color: var(--color-text-primary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-copy:hover {
+      border-color: var(--color-primary);
+      background: var(--color-bg-secondary);
+    }
+
+    .copy-feedback {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .copy-feedback.success {
+      color: var(--color-success);
+    }
+
+    .copy-feedback.error {
+      color: var(--color-error);
+    }
+
     .summary-label {
       font-size: 0.9rem;
       color: var(--color-text-secondary);
@@ -327,6 +375,7 @@ export class BillCalculatorComponent {
   billTotal = signal(0);
   startDate = signal('');
   endDate = signal('');
+  copyState = signal<'idle' | 'success' | 'error'>('idle');
 
   constructor() {
     this.thirtyDaysAgo = new Date(this.today);
@@ -415,6 +464,74 @@ export class BillCalculatorComponent {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+  }
+
+  async copyCalculatorAsText(): Promise<void> {
+    const text = this.getCalculatorText();
+    if (!text) {
+      this.copyState.set('error');
+      this.clearCopyStateLater();
+      return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        this.copyWithFallback(text);
+      }
+      this.copyState.set('success');
+    } catch {
+      this.copyState.set('error');
+    }
+    this.clearCopyStateLater();
+  }
+
+  private getCalculatorText(): string {
+    const apartment = this.currentApartment();
+    if (!apartment) {
+      return '';
+    }
+
+    const lines: string[] = [];
+    lines.push(`Apartment: ${apartment.name}`);
+    lines.push('');
+    lines.push('Input');
+    lines.push(`- Bill Total: ${this.formatCurrency(this.billTotal())}`);
+    lines.push(`- Start Date: ${this.startDate() || 'N/A'}`);
+    lines.push(`- End Date: ${this.endDate() || 'N/A'}`);
+    lines.push('');
+    lines.push('Output');
+    lines.push(`- Total Days of Presence: ${this.totalDaysOfPresence()}`);
+    lines.push(`- Cost per Day: ${this.formatCurrency(this.costPerDay())}`);
+    lines.push(`- Bill Total: ${this.formatCurrency(this.billTotal())}`);
+    lines.push('');
+    lines.push('Tenant Breakdown');
+    const bills = this.tenantBills();
+    if (bills.length === 0) {
+      lines.push('- No tenants with presence in this period');
+    } else {
+      for (const bill of bills) {
+        lines.push(`- ${bill.tenant.name}: ${bill.days} day${bill.days !== 1 ? 's' : ''} - ${this.formatCurrency(bill.amount)}`);
+      }
+    }
+    return lines.join('\n');
+  }
+
+  private copyWithFallback(text: string): void {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+  }
+
+  private clearCopyStateLater(): void {
+    window.setTimeout(() => this.copyState.set('idle'), 2000);
   }
 
   private formatDateInput(date: Date): string {
