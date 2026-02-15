@@ -81,6 +81,7 @@ import { ExpenseListComponent } from '../expense-list/expense-list.component';
         <section class="rooms-section">
           <app-room-list
             [rooms]="apartment().rooms"
+            [tenants]="apartment().tenants"
             (roomAdded)="onRoomAdded($event)"
             (roomUpdated)="onRoomUpdated($event)"
             (roomRemoved)="onRoomRemoved($event)"

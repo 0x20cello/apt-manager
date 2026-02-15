@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@a
 import { FormsModule } from '@angular/forms';
 import { ApartmentService } from '../../services/apartment.service';
 import { Tenant } from '../../models/apartment.model';
+import { parseYmdDate } from '../../utils/tenant-occupancy.util';
 
 interface TenantBill {
   tenant: Tenant;
@@ -384,8 +385,8 @@ export class BillCalculatorComponent {
   });
 
   private calculateTenantPresenceDays(tenant: Tenant, start: Date, end: Date): number {
-    const tenantStart = tenant.startDate ? new Date(tenant.startDate) : null;
-    const tenantEnd = tenant.endDate ? new Date(tenant.endDate) : null;
+    const tenantStart = tenant.startDate ? parseYmdDate(tenant.startDate) : null;
+    const tenantEnd = tenant.endDate ? parseYmdDate(tenant.endDate) : null;
 
     const effectiveStart = tenantStart && tenantStart > start ? tenantStart : start;
     const effectiveEnd = tenantEnd && tenantEnd < end ? tenantEnd : end;

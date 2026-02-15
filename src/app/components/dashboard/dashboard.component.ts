@@ -2,7 +2,7 @@ import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/c
 import { FormsModule } from '@angular/forms';
 import { ApartmentService } from '../../services/apartment.service';
 import { MetricsCardComponent } from '../metrics-card/metrics-card.component';
-import { Tenant, Room } from '../../models/apartment.model';
+import { isTenantContractActive } from '../../utils/tenant-occupancy.util';
 
 @Component({
   selector: 'app-dashboard',
@@ -420,6 +420,7 @@ export class DashboardComponent {
 
     for (const tenant of apartment.tenants) {
       if (!tenant.rentCollectionDay) continue;
+      if (!isTenantContractActive(tenant, today)) continue;
 
       const collectionDay = tenant.rentCollectionDay;
       const room = apartment.rooms.find((r) => r.id === tenant.roomId);

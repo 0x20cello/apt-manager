@@ -1,4 +1,4 @@
-import { Component, input, output, signal, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, input, output, signal, computed, ChangeDetectionStrategy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Tenant, Room } from '../../models/apartment.model';
 import { ApartmentService } from '../../services/apartment.service';
@@ -628,7 +628,12 @@ export class TenantListComponent {
   newTenantEndDate = signal('');
   newTenantRentCollectionDay = signal<number | undefined>(undefined);
   newTenantNotes = signal('');
-  selectedTenantForCalendar = signal<Tenant | null>(null);
+  selectedTenantForCalendarId = signal<string | null>(null);
+  selectedTenantForCalendar = computed(() => {
+    const selectedId = this.selectedTenantForCalendarId();
+    if (!selectedId) return null;
+    return this.tenants().find((tenant) => tenant.id === selectedId) || null;
+  });
   selectedTenantForEdit = signal<Tenant | null>(null);
   editTenantName = signal('');
   editTenantEmail = signal('');
@@ -694,11 +699,11 @@ export class TenantListComponent {
   }
 
   openCalendar(tenant: Tenant): void {
-    this.selectedTenantForCalendar.set(tenant);
+    this.selectedTenantForCalendarId.set(tenant.id);
   }
 
   closeCalendar(): void {
-    this.selectedTenantForCalendar.set(null);
+    this.selectedTenantForCalendarId.set(null);
   }
 
   getWhatsAppUrl(phone: string): string {

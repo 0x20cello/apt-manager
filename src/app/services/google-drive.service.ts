@@ -9,6 +9,7 @@ const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const FILE_NAME = 'part-manager.json';
 const GDRIVE_FILE_ID_KEY = 'gdrive-file-id';
 const GDRIVE_CLIENT_ID_KEY = 'gdrive-client-id';
+const GDRIVE_ACCESS_TOKEN_KEY = 'gdrive-access-token';
 const GDRIVE_OAUTH_CALLBACK_KEY = 'gdrive_oauth_callback';
 const GDRIVE_CODE_VERIFIER_KEY = 'gdrive_code_verifier';
 const OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -43,10 +44,10 @@ declare global {
 @Injectable({ providedIn: 'root' })
 export class GoogleDriveService {
   private platformId = inject(PLATFORM_ID);
-  private accessToken: string | null = null;
+  private accessToken: string | null = this.loadAccessToken();
   private tokenClient: TokenClient | null = null;
   private fileId: string | null = this.loadFileId();
-  private connectedSignal = signal<boolean>(false);
+  private connectedSignal = signal<boolean>(!!this.accessToken);
 
   readonly connected = this.connectedSignal.asReadonly();
   readonly clientId = signal<string>(this.loadClientId());
@@ -65,6 +66,10 @@ export class GoogleDriveService {
       if (Capacitor.isNativePlatform()) {
         App.addListener('appUrlOpen', (e: { url: string }) => this.handleOAuthFromUrl(e.url));
       }
+      if (this.accessToken) {
+        this.connectedSignal.set(true);
+        this.triggerConfigLoad();
+      }
     }
   }
 
@@ -76,7 +81,7 @@ export class GoogleDriveService {
       return true;
     }
     if (token) {
-      this.accessToken = token;
+      this.storeAccessToken(token);
       this.connectedSignal.set(true);
       this.lastError.set(null);
       this.triggerConfigLoad();
@@ -127,7 +132,7 @@ export class GoogleDriveService {
         if (verifier) {
           this.exchangeCodeForToken(code, verifier).then((token) => {
             if (token) {
-              this.accessToken = token;
+              this.storeAccessToken(token);
               this.connectedSignal.set(true);
               this.lastError.set(null);
               this.triggerConfigLoad();
@@ -176,7 +181,7 @@ export class GoogleDriveService {
       if (verifier) {
         this.exchangeCodeForToken(code, verifier).then((token) => {
           if (token) {
-            this.accessToken = token;
+            this.storeAccessToken(token);
             this.connectedSignal.set(true);
             this.lastError.set(null);
             this.triggerConfigLoad();
@@ -224,6 +229,10 @@ export class GoogleDriveService {
     return localStorage.getItem(GDRIVE_CLIENT_ID_KEY) ?? DEFAULT_CLIENT_ID;
   }
 
+  private loadAccessToken(): string | null {
+    return localStorage.getItem(GDRIVE_ACCESS_TOKEN_KEY);
+  }
+
   setClientId(id: string): void {
     this.clientId.set(id);
     if (id) {
@@ -261,6 +270,15 @@ export class GoogleDriveService {
       localStorage.setItem(GDRIVE_FILE_ID_KEY, id);
     } else {
       localStorage.removeItem(GDRIVE_FILE_ID_KEY);
+    }
+  }
+
+  private storeAccessToken(token: string | null): void {
+    this.accessToken = token;
+    if (token) {
+      localStorage.setItem(GDRIVE_ACCESS_TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(GDRIVE_ACCESS_TOKEN_KEY);
     }
   }
 
@@ -303,10 +321,11 @@ export class GoogleDriveService {
         if (response.error) {
           this.lastError.set(response.error);
           this.connectedSignal.set(false);
+          this.storeAccessToken(null);
           return;
         }
         this.lastError.set(null);
-        this.accessToken = response.access_token;
+        this.storeAccessToken(response.access_token);
         this.connectedSignal.set(true);
         this.triggerConfigLoad();
       },
@@ -386,7 +405,7 @@ export class GoogleDriveService {
     if (this.accessToken) {
       window.google?.accounts?.oauth2?.revoke(this.accessToken, () => { });
     }
-    this.accessToken = null;
+    this.storeAccessToken(null);
     this.fileId = null;
     this.storeFileId(null);
     this.connectedSignal.set(false);
@@ -404,7 +423,7 @@ export class GoogleDriveService {
       );
       if (listRes.status === 401) {
         this.connectedSignal.set(false);
-        this.accessToken = null;
+        this.storeAccessToken(null);
         return null;
       }
       if (!listRes.ok) return null;
@@ -419,7 +438,7 @@ export class GoogleDriveService {
     });
     if (res.status === 401) {
       this.connectedSignal.set(false);
-      this.accessToken = null;
+      this.storeAccessToken(null);
       return null;
     }
     if (!res.ok) return null;
@@ -448,7 +467,7 @@ export class GoogleDriveService {
       });
       if (res.status === 401) {
         this.connectedSignal.set(false);
-        this.accessToken = null;
+        this.storeAccessToken(null);
         return;
       }
       if (!res.ok) {
@@ -466,7 +485,7 @@ export class GoogleDriveService {
     );
     if (listRes.status === 401) {
       this.connectedSignal.set(false);
-      this.accessToken = null;
+      this.storeAccessToken(null);
       return;
     }
     if (!listRes.ok) {
@@ -495,7 +514,7 @@ export class GoogleDriveService {
     });
     if (createRes.status === 401) {
       this.connectedSignal.set(false);
-      this.accessToken = null;
+      this.storeAccessToken(null);
       return;
     }
     if (!createRes.ok) {

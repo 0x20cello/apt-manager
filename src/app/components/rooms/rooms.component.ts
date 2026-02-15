@@ -23,6 +23,7 @@ import { RoomListComponent } from '../room-list/room-list.component';
         <div class="rooms-content">
           <app-room-list
             [rooms]="currentApartment()!.rooms"
+            [tenants]="currentApartment()!.tenants"
             (roomAdded)="onRoomAdded($event)"
             (roomUpdated)="onRoomUpdated($event)"
             (roomRemoved)="onRoomRemoved($event)"

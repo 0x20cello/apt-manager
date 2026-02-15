@@ -1,6 +1,7 @@
 import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Room } from '../../models/apartment.model';
+import { Room, Tenant } from '../../models/apartment.model';
+import { getActiveTenantsForRoom } from '../../utils/tenant-occupancy.util';
 
 @Component({
   selector: 'app-room-list',
@@ -30,51 +31,71 @@ import { Room } from '../../models/apartment.model';
     @if (rooms().length === 0) {
       <p class="empty-list">No rooms added yet</p>
     } @else {
-      <div class="rooms-list">
-        @for (room of rooms(); track room.id) {
-          <div class="room-item" [class.taken]="room.isTaken">
-            <div class="room-info">
-              <input
-                type="text"
-                class="inline-edit"
-                [value]="room.name"
-                (blur)="onRoomNameChange(room.id, $event)"
-                (keydown.enter)="blurTarget($event)"
-              />
-              <div class="rent-display">
-                <input
-                  type="number"
-                  class="inline-number"
-                  [value]="room.rentMin"
-                  (blur)="onRentMinChange(room.id, $event)"
-                  (keydown.enter)="blurTarget($event)"
-                  min="0"
-                />
-                <span>-</span>
-                <input
-                  type="number"
-                  class="inline-number"
-                  [value]="room.rentMax"
-                  (blur)="onRentMaxChange(room.id, $event)"
-                  (keydown.enter)="blurTarget($event)"
-                  min="0"
-                />
-                <span class="currency">AED/mo</span>
-              </div>
-            </div>
-            <div class="room-actions">
-              <label class="checkbox-label">
-                <input
-                  type="checkbox"
-                  [checked]="room.isTaken"
-                  (change)="onTakenChange(room.id, room.isTaken)"
-                />
-                <span class="checkbox-text">Taken</span>
-              </label>
-              <button class="btn-delete-small" (click)="onRemove(room.id)">✕</button>
-            </div>
-          </div>
-        }
+      <div class="rooms-table-wrapper">
+        <table class="rooms-table">
+          <thead>
+            <tr>
+              <th>Room</th>
+              <th>Rent (AED/mo)</th>
+              <th>Tenants</th>
+              <th>Taken</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (room of rooms(); track room.id) {
+              <tr [class.taken-row]="isRoomTaken(room.id)">
+                <td>
+                  <input
+                    type="text"
+                    class="inline-edit"
+                    [value]="room.name"
+                    (blur)="onRoomNameChange(room.id, $event)"
+                    (keydown.enter)="blurTarget($event)"
+                  />
+                </td>
+                <td>
+                  <div class="rent-display">
+                    <input
+                      type="number"
+                      class="inline-number"
+                      [value]="room.rentMin"
+                      (blur)="onRentMinChange(room.id, $event)"
+                      (keydown.enter)="blurTarget($event)"
+                      min="0"
+                    />
+                    <span>-</span>
+                    <input
+                      type="number"
+                      class="inline-number"
+                      [value]="room.rentMax"
+                      (blur)="onRentMaxChange(room.id, $event)"
+                      (keydown.enter)="blurTarget($event)"
+                      min="0"
+                    />
+                  </div>
+                </td>
+                <td>
+                  @if (getTenantNames(room.id).length > 0) {
+                    <span class="tenant-list">{{ getTenantNames(room.id).join(', ') }}</span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td>
+                  @if (isRoomTaken(room.id)) {
+                    <span class="taken-pill">Taken</span>
+                  } @else {
+                    <span class="not-taken-pill">Available</span>
+                  }
+                </td>
+                <td>
+                  <button class="btn-delete-small" (click)="onRemove(room.id)">✕</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
     }
   `,
@@ -92,13 +113,8 @@ import { Room } from '../../models/apartment.model';
         gap: var(--spacing-sm);
       }
 
-      .room-item {
-        flex-wrap: wrap;
-      }
-
-      .room-actions {
-        width: 100%;
-        justify-content: flex-end;
+      .rooms-table-wrapper {
+        overflow-x: auto;
       }
 
       .add-form input {
@@ -227,37 +243,50 @@ import { Room } from '../../models/apartment.model';
       margin: 0;
     }
 
-    .rooms-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-sm);
-    }
-
-    .room-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: var(--spacing-sm) var(--spacing-md);
+    .rooms-table-wrapper {
+      overflow-x: auto;
       background: var(--color-card-bg);
       border: 1px solid var(--color-border);
       border-radius: var(--border-radius-lg);
-      transition: all 0.2s ease;
+      -webkit-overflow-scrolling: touch;
     }
 
-    .room-item:hover {
+    .rooms-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .rooms-table thead {
       background: var(--color-bg-secondary);
     }
 
-    .room-item.taken {
-      background: rgba(16, 185, 129, 0.05);
-      border-color: var(--color-success);
+    .rooms-table th {
+      padding: var(--spacing-md);
+      text-align: left;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      border-bottom: 2px solid var(--color-border);
     }
 
-    .room-info {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-xs);
-      flex: 1;
+    .rooms-table td {
+      padding: var(--spacing-md);
+      border-bottom: 1px solid var(--color-border);
+      font-size: 0.9rem;
+      color: var(--color-text-primary);
+      vertical-align: middle;
+    }
+
+    .rooms-table tbody tr:hover {
+      background: var(--color-bg-secondary);
+    }
+
+    .rooms-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .taken-row {
+      background: rgba(16, 185, 129, 0.05);
     }
 
     .inline-edit {
@@ -265,11 +294,11 @@ import { Room } from '../../models/apartment.model';
       border: none;
       color: var(--color-text-primary);
       font-size: 0.95rem;
-      font-weight: 500;
+      font-weight: 600;
       font-family: inherit;
       padding: var(--spacing-xs);
       border-radius: var(--border-radius-sm);
-      width: 100%;
+      min-width: 140px;
       transition: all 0.2s ease;
     }
 
@@ -285,13 +314,13 @@ import { Room } from '../../models/apartment.model';
     .rent-display {
       display: flex;
       align-items: center;
-      gap: var(--spacing-sm);
+      gap: var(--spacing-xs);
       color: var(--color-text-secondary);
       font-size: 0.85rem;
     }
 
     .inline-number {
-      width: 70px;
+      width: 78px;
       background: transparent;
       border: none;
       color: var(--color-text-secondary);
@@ -318,34 +347,35 @@ import { Room } from '../../models/apartment.model';
       margin: 0;
     }
 
-    .currency {
-      color: var(--color-text-tertiary);
-      font-size: 0.75rem;
-    }
-
-    .room-actions {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      cursor: pointer;
-    }
-
-    .checkbox-label input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--color-success);
-      cursor: pointer;
-    }
-
-    .checkbox-text {
+    .tenant-list {
       color: var(--color-text-secondary);
-      font-size: 0.85rem;
+    }
+
+    .text-muted {
+      color: var(--color-text-tertiary);
+      font-style: italic;
+    }
+
+    .taken-pill,
+    .not-taken-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 90px;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .taken-pill {
+      color: var(--color-success-dark);
+      background: rgba(16, 185, 129, 0.15);
+    }
+
+    .not-taken-pill {
+      color: var(--color-text-secondary);
+      background: var(--color-bg-secondary);
     }
 
     .btn-delete-small {
@@ -368,6 +398,7 @@ import { Room } from '../../models/apartment.model';
 })
 export class RoomListComponent {
   rooms = input.required<Room[]>();
+  tenants = input<Tenant[]>([]);
   roomAdded = output<{ name: string; rentMin: number; rentMax: number }>();
   roomUpdated = output<{ id: string; updates: Partial<Omit<Room, 'id'>> }>();
   roomRemoved = output<string>();
@@ -407,8 +438,12 @@ export class RoomListComponent {
     this.roomUpdated.emit({ id, updates: { rentMax: +input.value } });
   }
 
-  onTakenChange(id: string, currentValue: boolean): void {
-    this.roomUpdated.emit({ id, updates: { isTaken: !currentValue } });
+  getTenantNames(roomId: string): string[] {
+    return getActiveTenantsForRoom(this.tenants(), roomId).map((tenant) => tenant.name);
+  }
+
+  isRoomTaken(roomId: string): boolean {
+    return getActiveTenantsForRoom(this.tenants(), roomId).length > 0;
   }
 
   onRemove(id: string): void {

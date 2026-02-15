@@ -2,6 +2,7 @@ import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { Apartment, Room, Expense, ApartmentMetrics, ExpenseCadence, Tenant } from '../models/apartment.model';
 import { CloudSyncService } from './cloud-sync.service';
 import { GoogleDriveService, GDRIVE_CONFIG_LOADED_EVENT } from './google-drive.service';
+import { getActiveTenantsForRoom } from '../utils/tenant-occupancy.util';
 
 const STORAGE_KEY = 'apartment-manager-data';
 const CURRENT_APARTMENT_KEY = 'current-apartment-id';
@@ -130,6 +131,41 @@ export class ApartmentService {
         return crypto.randomUUID();
     }
 
+    private parseYmdDate(value?: string): Date | null {
+        if (!value) return null;
+        const parts = value.split('-').map(Number);
+        if (parts.length !== 3 || parts.some((part) => Number.isNaN(part))) {
+            return null;
+        }
+        const [year, month, day] = parts;
+        return new Date(year, month - 1, day);
+    }
+
+    private sanitizeDisabledDates(tenant: Pick<Tenant, 'startDate' | 'endDate' | 'disabledDates'>): string[] | undefined {
+        const disabledDates = tenant.disabledDates || [];
+        if (disabledDates.length === 0) return undefined;
+
+        const startTime = this.parseYmdDate(tenant.startDate)?.getTime();
+        const endTime = this.parseYmdDate(tenant.endDate)?.getTime();
+        const filtered = disabledDates.filter((dateValue) => {
+            const time = this.parseYmdDate(dateValue)?.getTime();
+            if (time === undefined) return false;
+            if (startTime !== undefined && time < startTime) return false;
+            if (endTime !== undefined && time > endTime) return false;
+            return true;
+        });
+        const unique = Array.from(new Set(filtered));
+        return unique.length > 0 ? unique : undefined;
+    }
+
+    private withSanitizedDisabledDates(tenant: Tenant): Tenant {
+        const disabledDates = this.sanitizeDisabledDates(tenant);
+        return {
+            ...tenant,
+            disabledDates,
+        };
+    }
+
     getCurrentApartment(): Apartment | null {
         return this.currentApartment();
     }
@@ -249,7 +285,12 @@ export class ApartmentService {
     }
 
     calculateMetrics(apartment: Apartment): ApartmentMetrics {
-        const takenRooms = apartment.rooms.filter((r) => r.isTaken);
+        const takenRoomIds = new Set(
+            apartment.rooms
+                .filter((room) => getActiveTenantsForRoom(apartment.tenants, room.id).length > 0)
+                .map((room) => room.id)
+        );
+        const takenRooms = apartment.rooms.filter((room) => takenRoomIds.has(room.id));
 
         const monthlyRevenue = takenRooms.reduce(
             (sum, r) => sum + (r.rentMin + r.rentMax) / 2,
@@ -303,7 +344,7 @@ export class ApartmentService {
     }
 
     addTenant(apartmentId: string, tenant: Omit<Tenant, 'id'>): void {
-        const newTenant: Tenant = { ...tenant, id: this.generateId() };
+        const newTenant = this.withSanitizedDisabledDates({ ...tenant, id: this.generateId() });
         this.apartmentsSignal.update((apts) =>
             apts.map((a) =>
                 a.id === apartmentId
@@ -321,7 +362,7 @@ export class ApartmentService {
                     ? {
                         ...a,
                         tenants: a.tenants.map((t) =>
-                            t.id === tenantId ? { ...t, ...updates } : t
+                            t.id === tenantId ? this.withSanitizedDisabledDates({ ...t, ...updates }) : t
                         ),
                     }
                     : a
@@ -360,11 +401,11 @@ export class ApartmentService {
                             } else {
                                 updatedDisabledDates = disabledDates.filter((d) => d !== date);
                             }
-                            
-                            return {
+
+                            return this.withSanitizedDisabledDates({
                                 ...t,
-                                disabledDates: updatedDisabledDates.length > 0 ? updatedDisabledDates : undefined,
-                            };
+                                disabledDates: updatedDisabledDates,
+                            });
                         }),
                     }
                     : a

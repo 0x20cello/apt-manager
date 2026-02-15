@@ -1,5 +1,6 @@
 import { Component, input, output, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { Tenant } from '../../models/apartment.model';
+import { isDateAfterTenantEnd, parseYmdDate } from '../../utils/tenant-occupancy.util';
 
 @Component({
   selector: 'app-tenant-calendar',
@@ -219,15 +220,10 @@ export class TenantCalendarComponent {
     const date = this.parseDate(dateStr);
     
     if (tenant.startDate) {
-      const start = new Date(tenant.startDate);
+      const start = parseYmdDate(tenant.startDate);
+      if (!start) return true;
       start.setHours(0, 0, 0, 0);
       if (date < start) return false;
-    }
-
-    if (tenant.endDate) {
-      const end = new Date(tenant.endDate);
-      end.setHours(23, 59, 59, 999);
-      if (date > end) return false;
     }
 
     return true;
@@ -236,6 +232,7 @@ export class TenantCalendarComponent {
   isDisabled(dateStr: string): boolean {
     if (!this.isInRange(dateStr)) return false;
     const tenant = this.tenant();
+    if (isDateAfterTenantEnd(tenant, dateStr)) return true;
     return tenant.disabledDates?.includes(dateStr) || false;
   }
 
@@ -246,6 +243,7 @@ export class TenantCalendarComponent {
 
   toggleDate(dateStr: string): void {
     if (!this.isInRange(dateStr)) return;
+    if (isDateAfterTenantEnd(this.tenant(), dateStr)) return;
 
     const isCurrentlyDisabled = this.isDisabled(dateStr);
     this.dateToggled.emit({ date: dateStr, disabled: !isCurrentlyDisabled });
@@ -283,6 +281,10 @@ export class TenantCalendarComponent {
     
     if (!this.isInRange(dateStr)) {
       return `${formatted} - Outside contract period`;
+    }
+
+    if (isDateAfterTenantEnd(this.tenant(), dateStr)) {
+      return `${formatted} - Contract ended`;
     }
     
     if (this.isDisabled(dateStr)) {
