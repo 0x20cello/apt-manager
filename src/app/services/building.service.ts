@@ -1,6 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Building } from '../models/building.model';
 import { Apartment } from '../models/apartment.model';
+import { generateUUID } from '../utils/uuid.util';
 
 const STORAGE_KEY = 'building-manager-data';
 const CURRENT_BUILDING_KEY = 'current-building-id';
@@ -43,7 +44,7 @@ export class BuildingService {
   }
 
   private generateId(): string {
-    return crypto.randomUUID();
+    return generateUUID();
   }
 
   getBuildings(): Building[] {

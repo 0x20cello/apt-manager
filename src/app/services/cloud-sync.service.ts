@@ -1,6 +1,7 @@
 import { Injectable, signal, effect } from '@angular/core';
 import { Apartment } from '../models/apartment.model';
 import { FirebaseService } from './firebase.service';
+import { generateUUID } from '../utils/uuid.util';
 
 const USER_ID_KEY = 'apartment-manager-user-id';
 const SYNC_ENABLED_KEY = 'cloud-sync-enabled';
@@ -28,7 +29,7 @@ export class CloudSyncService {
   private getOrCreateUserId(): string {
     let userId = localStorage.getItem(USER_ID_KEY);
     if (!userId) {
-      userId = crypto.randomUUID();
+      userId = generateUUID();
       localStorage.setItem(USER_ID_KEY, userId);
     }
     return userId;

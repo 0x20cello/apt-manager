@@ -28,6 +28,7 @@ import { LayoutService } from '../../services/layout.service';
       justify-content: space-between;
       align-items: center;
       padding: var(--spacing-lg) var(--spacing-xl);
+      padding-top: max(var(--spacing-lg), env(safe-area-inset-top));
       padding-left: max(var(--spacing-lg), env(safe-area-inset-left));
       padding-right: max(var(--spacing-xl), env(safe-area-inset-right));
       background: var(--color-card-bg);

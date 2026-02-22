@@ -3,6 +3,7 @@ import { Apartment, Room, Expense, ApartmentMetrics, ExpenseCadence, Tenant } fr
 import { CloudSyncService } from './cloud-sync.service';
 import { GoogleDriveService, GDRIVE_CONFIG_LOADED_EVENT } from './google-drive.service';
 import { getActiveTenantsForRoom } from '../utils/tenant-occupancy.util';
+import { generateUUID } from '../utils/uuid.util';
 
 const STORAGE_KEY = 'apartment-manager-data';
 const CURRENT_APARTMENT_KEY = 'current-apartment-id';
@@ -128,7 +129,7 @@ export class ApartmentService {
     }
 
     private generateId(): string {
-        return crypto.randomUUID();
+        return generateUUID();
     }
 
     private parseYmdDate(value?: string): Date | null {

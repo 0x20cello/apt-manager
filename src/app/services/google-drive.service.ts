@@ -15,6 +15,7 @@ const GDRIVE_CODE_VERIFIER_KEY = 'gdrive_code_verifier';
 const OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const DEFAULT_CLIENT_ID = '838239311300-ji616dlcecp6upb9417t6jf0agqh7mt0.apps.googleusercontent.com';
 const GDRIVE_NATIVE_REDIRECT_URI_KEY = 'gdrive-native-redirect-uri';
+const DEFAULT_NATIVE_REDIRECT_URI = 'https://0x20cello.github.io/apt-manager/oauth-redirect';
 export const NATIVE_APP_SCHEME = 'com.apartmentmanager.app';
 export const GDRIVE_CONFIG_LOADED_EVENT = 'gdrive-config-loaded';
 
@@ -243,7 +244,9 @@ export class GoogleDriveService {
   }
 
   private loadNativeRedirectUri(): string {
-    return typeof localStorage !== 'undefined' ? (localStorage.getItem(GDRIVE_NATIVE_REDIRECT_URI_KEY) ?? '') : '';
+    return typeof localStorage !== 'undefined'
+      ? (localStorage.getItem(GDRIVE_NATIVE_REDIRECT_URI_KEY) || DEFAULT_NATIVE_REDIRECT_URI)
+      : DEFAULT_NATIVE_REDIRECT_URI;
   }
 
   setNativeRedirectUri(uri: string): void {

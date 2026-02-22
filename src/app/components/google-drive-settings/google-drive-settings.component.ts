@@ -26,28 +26,9 @@ import { GoogleDriveService } from '../../services/google-drive.service';
               placeholder="xxx.apps.googleusercontent.com"
             />
           </div>
-          @if (gdrive.isNative) {
-            <div class="form-group">
-              <label>Native redirect URL (https)</label>
-              <input
-                type="url"
-                [ngModel]="gdrive.nativeRedirectUri()"
-                (ngModelChange)="gdrive.setNativeRedirectUri($event)"
-                placeholder="https://yourdomain.com/oauth-redirect"
-              />
-              <p class="field-help">Your app URL + <code>/oauth-redirect</code>. Add this to Authorized redirect URIs. After auth, Google opens this URL and the page redirects back to the app.</p>
-            </div>
-          }
-          @if (!gdrive.isNative) {
-            <p class="redirect-uri-help">
-              Add this to <strong>Authorized redirect URIs</strong>: <code class="redirect-uri-value">{{ redirectUri }}</code>
-            </p>
-          }
-          @if (gdrive.isNative && gdrive.nativeRedirectUri()) {
-            <p class="redirect-uri-help">
-              Add this to <strong>Authorized redirect URIs</strong>: <code class="redirect-uri-value">{{ gdrive.nativeRedirectUri() }}</code>
-            </p>
-          }
+          <p class="redirect-uri-help">
+            Add this to <strong>Authorized redirect URIs</strong>: <code class="redirect-uri-value">{{ redirectUri }}</code>
+          </p>
           @if (lastError()) {
             <p class="error-text">{{ lastError() }}</p>
           }
