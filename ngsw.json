@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1769930504281,
+  "timestamp": 1771762110772,
   "index": "/apt-manager/index.html",
   "assetGroups": [
     {
@@ -11,10 +11,10 @@
         "ignoreVary": true
       },
       "urls": [
-        "/apt-manager/chunk-CLPC5DQS.js",
-        "/apt-manager/chunk-OH4JYQ7P.js",
+        "/apt-manager/chunk-NX5AMF3I.js",
+        "/apt-manager/chunk-UD7QDXYL.js",
         "/apt-manager/index.html",
-        "/apt-manager/main-T5LUVPG5.js",
+        "/apt-manager/main-MBYQQOIE.js",
         "/apt-manager/manifest.webmanifest",
         "/apt-manager/polyfills-B6TNHZQ6.js",
         "/apt-manager/styles-XIN2OQHH.css"
@@ -43,8 +43,8 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/apt-manager/chunk-CLPC5DQS.js": "96844e279396e13242372d6b20e7665d18bbf3fb",
-    "/apt-manager/chunk-OH4JYQ7P.js": "7d45853e793fcfccbb005b8c75e6af43e0fe1595",
+    "/apt-manager/chunk-NX5AMF3I.js": "d87d032899ae645fdd2d03b310fc0972c1223aca",
+    "/apt-manager/chunk-UD7QDXYL.js": "37f425a00c68689590fa9075c1ad242a824646a1",
     "/apt-manager/icons/icon-128x128.png": "f912963bdc6d5a38d8f1dd0afbaab2ce8d657acb",
     "/apt-manager/icons/icon-144x144.png": "b155fd5f2fd5d2ea7760721063003c4cd95fd783",
     "/apt-manager/icons/icon-152x152.png": "eae6e0f0c8afb8aaae339e2a569b43e9238e5e6c",
@@ -53,8 +53,8 @@
     "/apt-manager/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
     "/apt-manager/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
     "/apt-manager/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
-    "/apt-manager/index.html": "cdc827538f14bcbce1d5df6c83bfd98ea779bfd9",
-    "/apt-manager/main-T5LUVPG5.js": "73f897f3329b1af9e341f121ffaaa39df5a2cc1f",
+    "/apt-manager/index.html": "9662d0c23e1aeba9bd6f9d5ee342cda0d7f7d0df",
+    "/apt-manager/main-MBYQQOIE.js": "4f825f3b3c94107e1f14a98be6337cff907e72c9",
     "/apt-manager/manifest.webmanifest": "a71734883eed948dc38ce13850f1d04dd3f3fa89",
     "/apt-manager/polyfills-B6TNHZQ6.js": "bf76ac291d7f51c1139b7edcf86b359a30c08c64",
     "/apt-manager/styles-XIN2OQHH.css": "f913f6342bcc7a0b83532cbf2cf763eb0dd2ce1c"
