@@ -28,12 +28,27 @@ export interface Tenant {
     rentCollectionDay?: number;
 }
 
+export type PaymentType = 'rent' | 'bill';
+
+export interface Payment {
+    id: string;
+    type: PaymentType;
+    roomId: string;
+    tenantId: string;
+    amount: number;
+    dueDate: string;
+    month: number;
+    year: number;
+    paidDate?: string;
+}
+
 export interface Apartment {
     id: string;
     name: string;
     rooms: Room[];
     expenses: Expense[];
     tenants: Tenant[];
+    payments: Payment[];
 }
 
 export interface ApartmentMetrics {

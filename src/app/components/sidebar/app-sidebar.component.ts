@@ -27,6 +27,12 @@ import { LayoutService } from '../../services/layout.service';
             </a>
           </li>
           <li class="nav-item">
+            <a routerLink="/payments" routerLinkActive="active" class="nav-link" (click)="layout.closeMobileMenu()">
+              <span class="nav-icon">💳</span>
+              Payments
+            </a>
+          </li>
+          <li class="nav-item">
             <a routerLink="/rooms" routerLinkActive="active" class="nav-link" (click)="layout.closeMobileMenu()">
               <span class="nav-icon">🚪</span>
               Rooms

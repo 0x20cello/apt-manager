@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApartmentService } from '../../services/apartment.service';
-import { Tenant } from '../../models/apartment.model';
+import { Tenant, Room } from '../../models/apartment.model';
 import { parseYmdDate } from '../../utils/tenant-occupancy.util';
 
 interface TenantBill {
@@ -59,6 +59,23 @@ interface TenantBill {
                 [(ngModel)]="endDate"
               />
             </div>
+
+            @if (rooms().length > 0) {
+              <div class="form-group">
+                <label>Rooms</label>
+                <div class="room-filters">
+                  @for (room of rooms(); track room.id) {
+                    <button
+                      class="room-chip"
+                      [class.excluded]="excludedRoomIds().has(room.id)"
+                      (click)="toggleRoom(room.id)"
+                    >
+                      {{ room.name }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
           </div>
 
           @if (billTotal() > 0 && startDate() && endDate()) {
@@ -85,6 +102,16 @@ interface TenantBill {
                     <span class="copy-feedback success">Copied</span>
                   } @else if (copyState() === 'error') {
                     <span class="copy-feedback error">Copy failed</span>
+                  }
+                  <button
+                    class="btn-create-payments"
+                    (click)="createPayments()"
+                    [disabled]="tenantBills().length === 0"
+                  >
+                    Create Payments
+                  </button>
+                  @if (paymentsState() === 'success') {
+                    <span class="copy-feedback success">Created</span>
                   }
                 </div>
               </div>
@@ -206,6 +233,41 @@ interface TenantBill {
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 
+    .room-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+    }
+
+    .room-chip {
+      padding: var(--spacing-xs) var(--spacing-md);
+      border: 1px solid var(--color-primary-light);
+      border-radius: var(--border-radius-md);
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--color-primary);
+      font-size: 0.85rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .room-chip:hover {
+      background: rgba(37, 99, 235, 0.15);
+    }
+
+    .room-chip.excluded {
+      background: transparent;
+      border-color: var(--color-border);
+      color: var(--color-text-tertiary);
+      text-decoration: line-through;
+    }
+
+    .room-chip.excluded:hover {
+      border-color: var(--color-border-light);
+      color: var(--color-text-secondary);
+    }
+
     .calculation-results {
       display: flex;
       flex-direction: column;
@@ -261,6 +323,29 @@ interface TenantBill {
     .btn-copy:hover {
       border-color: var(--color-primary);
       background: var(--color-bg-secondary);
+    }
+
+    .btn-create-payments {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 1px solid var(--color-primary-light);
+      border-radius: var(--border-radius-md);
+      background: var(--color-primary);
+      color: white;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-left: auto;
+    }
+
+    .btn-create-payments:hover:not(:disabled) {
+      background: var(--color-primary-dark);
+    }
+
+    .btn-create-payments:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .copy-feedback {
@@ -376,6 +461,10 @@ export class BillCalculatorComponent {
   startDate = signal('');
   endDate = signal('');
   copyState = signal<'idle' | 'success' | 'error'>('idle');
+  paymentsState = signal<'idle' | 'success'>('idle');
+  excludedRoomIds = signal<Set<string>>(new Set());
+
+  rooms = computed(() => this.currentApartment()?.rooms ?? []);
 
   constructor() {
     this.thirtyDaysAgo = new Date(this.today);
@@ -392,9 +481,11 @@ export class BillCalculatorComponent {
     const end = this.parseDate(this.endDate());
     if (!start || !end || end < start) return 0;
 
+    const excluded = this.excludedRoomIds();
     let totalDays = 0;
 
     for (const tenant of apartment.tenants) {
+      if (excluded.has(tenant.roomId)) continue;
       totalDays += this.calculateTenantPresenceDays(tenant, start, end);
     }
 
@@ -416,10 +507,12 @@ export class BillCalculatorComponent {
     const end = this.parseDate(this.endDate());
     if (!start || !end || end < start) return [];
 
+    const excluded = this.excludedRoomIds();
     const costPerDayValue = this.costPerDay();
     const bills: TenantBill[] = [];
 
     for (const tenant of apartment.tenants) {
+      if (excluded.has(tenant.roomId)) continue;
       const days = this.calculateTenantPresenceDays(tenant, start, end);
       if (days > 0) {
         bills.push({
@@ -464,6 +557,42 @@ export class BillCalculatorComponent {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+  }
+
+  toggleRoom(roomId: string): void {
+    this.excludedRoomIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(roomId)) {
+        next.delete(roomId);
+      } else {
+        next.add(roomId);
+      }
+      return next;
+    });
+  }
+
+  createPayments(): void {
+    const apartment = this.currentApartment();
+    if (!apartment) return;
+
+    const bills = this.tenantBills();
+    if (bills.length === 0) return;
+
+    const end = this.parseDate(this.endDate());
+    if (!end) return;
+
+    const month = end.getMonth();
+    const year = end.getFullYear();
+
+    this.apartmentService.addBillPayments(
+      apartment.id,
+      bills.map((b) => ({ tenantId: b.tenant.id, amount: b.amount })),
+      month,
+      year,
+    );
+
+    this.paymentsState.set('success');
+    window.setTimeout(() => this.paymentsState.set('idle'), 2000);
   }
 
   async copyCalculatorAsText(): Promise<void> {

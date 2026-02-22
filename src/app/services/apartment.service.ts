@@ -1,8 +1,8 @@
 import { Injectable, signal, computed, inject, effect } from '@angular/core';
-import { Apartment, Room, Expense, ApartmentMetrics, ExpenseCadence, Tenant } from '../models/apartment.model';
+import { Apartment, Room, Expense, ApartmentMetrics, ExpenseCadence, Tenant, Payment } from '../models/apartment.model';
 import { CloudSyncService } from './cloud-sync.service';
 import { GoogleDriveService, GDRIVE_CONFIG_LOADED_EVENT } from './google-drive.service';
-import { getActiveTenantsForRoom } from '../utils/tenant-occupancy.util';
+import { getActiveTenantsForRoom, isTenantContractActive } from '../utils/tenant-occupancy.util';
 import { generateUUID } from '../utils/uuid.util';
 
 const STORAGE_KEY = 'apartment-manager-data';
@@ -42,6 +42,7 @@ export class ApartmentService {
                     const normalized = data.map((apt) => ({
                         ...apt,
                         tenants: apt.tenants || [],
+                        payments: apt.payments || [],
                     }));
                     this.apartmentsSignal.set(normalized);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
@@ -105,6 +106,7 @@ export class ApartmentService {
         return apartments.map((apt: Apartment) => ({
             ...apt,
             tenants: apt.tenants || [],
+            payments: apt.payments || [],
         }));
     }
 
@@ -183,6 +185,7 @@ export class ApartmentService {
             rooms: [],
             expenses: [],
             tenants: [],
+            payments: [],
         };
         this.apartmentsSignal.update((apts) => [...apts, apartment]);
         this.saveToStorage();
@@ -413,6 +416,150 @@ export class ApartmentService {
             )
         );
         this.saveToStorage();
+    }
+
+    generateRentPayments(apartmentId: string, month: number, year: number): void {
+        const apartment = this.apartmentsSignal().find((a) => a.id === apartmentId);
+        if (!apartment) return;
+
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        const referenceDate = new Date(year, month, 15);
+        const allPayments = apartment.payments || [];
+
+        const seenRentRooms = new Set<string>();
+        const deduped = allPayments.filter((p) => {
+            if (p.type === 'rent' && p.month === month && p.year === year) {
+                const key = p.roomId;
+                if (seenRentRooms.has(key)) return false;
+                seenRentRooms.add(key);
+            }
+            return true;
+        });
+        if (deduped.length < allPayments.length) {
+            this.apartmentsSignal.update((apts) =>
+                apts.map((a) => a.id === apartmentId ? { ...a, payments: deduped } : a)
+            );
+            this.saveToStorage();
+        }
+
+        const existing = deduped;
+        const newPayments: Payment[] = [];
+
+
+        for (const room of apartment.rooms) {
+            const roomAlreadyHasRent = existing.some(
+                (p) => p.roomId === room.id && p.month === month && p.year === year && p.type === 'rent'
+            );
+            if (roomAlreadyHasRent) continue;
+
+            const activeTenant = apartment.tenants.find(
+                (t) => t.roomId === room.id && t.rentCollectionDay && isTenantContractActive(t, referenceDate)
+            );
+            if (!activeTenant) continue;
+
+            const day = Math.min(activeTenant.rentCollectionDay!, lastDay);
+            const dueDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+            newPayments.push({
+                id: this.generateId(),
+                type: 'rent',
+                roomId: room.id,
+                tenantId: activeTenant.id,
+                amount: (room.rentMin + room.rentMax) / 2,
+                dueDate,
+                month,
+                year,
+            });
+        }
+
+        if (newPayments.length === 0) return;
+
+        this.apartmentsSignal.update((apts) =>
+            apts.map((a) =>
+                a.id === apartmentId
+                    ? { ...a, payments: [...(a.payments || []), ...newPayments] }
+                    : a
+            )
+        );
+        this.saveToStorage();
+    }
+
+    togglePaymentPaid(apartmentId: string, paymentId: string): void {
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        this.apartmentsSignal.update((apts) =>
+            apts.map((a) =>
+                a.id === apartmentId
+                    ? {
+                        ...a,
+                        payments: (a.payments || []).map((p) =>
+                            p.id === paymentId
+                                ? { ...p, paidDate: p.paidDate ? undefined : todayStr }
+                                : p
+                        ),
+                    }
+                    : a
+            )
+        );
+        this.saveToStorage();
+    }
+
+    removePayment(apartmentId: string, paymentId: string): void {
+        this.apartmentsSignal.update((apts) =>
+            apts.map((a) =>
+                a.id === apartmentId
+                    ? { ...a, payments: (a.payments || []).filter((p) => p.id !== paymentId) }
+                    : a
+            )
+        );
+        this.saveToStorage();
+    }
+
+    addBillPayments(apartmentId: string, bills: Array<{ tenantId: string; amount: number }>, month: number, year: number): void {
+        const apartment = this.apartmentsSignal().find((a) => a.id === apartmentId);
+        if (!apartment) return;
+
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        const newPayments: Payment[] = [];
+
+        for (const bill of bills) {
+            const tenant = apartment.tenants.find((t) => t.id === bill.tenantId);
+            if (!tenant) continue;
+
+            const day = Math.min(tenant.rentCollectionDay || 1, lastDay);
+            const dueDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+            newPayments.push({
+                id: this.generateId(),
+                type: 'bill',
+                roomId: tenant.roomId,
+                tenantId: tenant.id,
+                amount: bill.amount,
+                dueDate,
+                month,
+                year,
+            });
+        }
+
+        if (newPayments.length === 0) return;
+
+        this.apartmentsSignal.update((apts) =>
+            apts.map((a) =>
+                a.id === apartmentId
+                    ? { ...a, payments: [...(a.payments || []), ...newPayments] }
+                    : a
+            )
+        );
+        this.saveToStorage();
+    }
+
+    getPaymentsForMonth(apartmentId: string, month: number, year: number): Payment[] {
+        const apartment = this.apartmentsSignal().find((a) => a.id === apartmentId);
+        if (!apartment) return [];
+        return (apartment.payments || [])
+            .filter((p) => p.month === month && p.year === year)
+            .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
     }
 }
 

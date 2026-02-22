@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from '../components/dashboard/dashboard.component';
 import { ExpensesComponent } from '../components/expenses/expenses.component';
+import { PaymentsComponent } from '../components/payments/payments.component';
 import { RoomsComponent } from '../components/rooms/rooms.component';
 import { TenantsComponent } from '../components/tenants/tenants.component';
 import { BillCalculatorComponent } from '../components/bill-calculator/bill-calculator.component';
@@ -23,6 +24,10 @@ export const routes: Routes = [
   {
     path: 'expenses',
     component: ExpensesComponent,
+  },
+  {
+    path: 'payments',
+    component: PaymentsComponent,
   },
   {
     path: 'rooms',
