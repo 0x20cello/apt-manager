@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1771762110772,
+  "timestamp": 1771765093038,
   "index": "/apt-manager/index.html",
   "assetGroups": [
     {
@@ -14,7 +14,7 @@
         "/apt-manager/chunk-NX5AMF3I.js",
         "/apt-manager/chunk-UD7QDXYL.js",
         "/apt-manager/index.html",
-        "/apt-manager/main-MBYQQOIE.js",
+        "/apt-manager/main-FOBG46R2.js",
         "/apt-manager/manifest.webmanifest",
         "/apt-manager/polyfills-B6TNHZQ6.js",
         "/apt-manager/styles-XIN2OQHH.css"
@@ -53,8 +53,8 @@
     "/apt-manager/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
     "/apt-manager/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
     "/apt-manager/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
-    "/apt-manager/index.html": "9662d0c23e1aeba9bd6f9d5ee342cda0d7f7d0df",
-    "/apt-manager/main-MBYQQOIE.js": "4f825f3b3c94107e1f14a98be6337cff907e72c9",
+    "/apt-manager/index.html": "cf57777c8cda89d1c9b7d9d1f6029405e27f063d",
+    "/apt-manager/main-FOBG46R2.js": "8a5ee53dedd795db65bd972561a2510117671cb0",
     "/apt-manager/manifest.webmanifest": "a71734883eed948dc38ce13850f1d04dd3f3fa89",
     "/apt-manager/polyfills-B6TNHZQ6.js": "bf76ac291d7f51c1139b7edcf86b359a30c08c64",
     "/apt-manager/styles-XIN2OQHH.css": "f913f6342bcc7a0b83532cbf2cf763eb0dd2ce1c"
